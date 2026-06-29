@@ -137,13 +137,31 @@ export default function ConfiguracoesPage() {
   const [form, setForm] = useState({ username: '', password: '' })
   const [novaPerm, setNovaPerm] = useState<Permissoes>(emptyPermissoes())
 
-  // Editar permissões de conta existente
+  // Editar conta existente (usuário, senha, permissões)
   const [editConta, setEditConta] = useState<Conta | null>(null)
   const [editPerm, setEditPerm] = useState<Permissoes>(emptyPermissoes())
+  const [editUsername, setEditUsername] = useState('')
+  const [editPassword, setEditPassword] = useState('')
 
   function abrirEdit(conta: Conta) {
     setEditConta(conta)
     setEditPerm({ ...emptyPermissoes(), ...conta.permissoes })
+    setEditUsername(conta.username)
+    setEditPassword('')
+  }
+
+  function salvarEdicao() {
+    if (!editConta) return
+    const body: { id: number; username?: string; password?: string; permissoes: Permissoes } = {
+      id: editConta.id,
+      permissoes: editPerm,
+    }
+    if (editUsername.trim() && editUsername.trim() !== editConta.username) body.username = editUsername.trim()
+    if (editPassword.trim()) body.password = editPassword.trim()
+    updateConta.mutate(body, {
+      onSuccess: () => { addToast('success', 'Conta atualizada!'); setEditConta(null) },
+      onError: e => onError(e, 'Erro ao salvar conta.'),
+    })
   }
 
   function onError(err: unknown, fallback: string) {
@@ -242,9 +260,9 @@ export default function ConfiguracoesPage() {
                       <td className="px-3 py-2.5">
                         {canEditConfig && (
                           <div className="flex items-center gap-3">
-                            <button onClick={() => abrirEdit(conta)} title="Permissões"
+                            <button onClick={() => abrirEdit(conta)} title="Editar conta"
                               className="text-txt3 hover:text-gold transition-colors flex items-center gap-1 font-mono text-xs">
-                              <KeyRound size={14} /> Permissões
+                              <KeyRound size={14} /> Editar
                             </button>
                             {conta.id !== user?.contaId && (
                               <button onClick={() => { if (confirm('Excluir esta conta?')) deleteConta.mutate(conta.id, { onError: e => onError(e, 'Erro ao excluir.') }) }}
@@ -304,22 +322,28 @@ export default function ConfiguracoesPage() {
         </div>
       </ModalOverlay>
 
-      {/* Modal Editar Permissões */}
-      <ModalOverlay open={!!editConta} onClose={() => setEditConta(null)} title={`PERMISSÕES — ${editConta?.username ?? ''}`} maxWidth="max-w-lg">
+      {/* Modal Editar Conta */}
+      <ModalOverlay open={!!editConta} onClose={() => setEditConta(null)} title={`EDITAR CONTA — ${editConta?.username ?? ''}`} maxWidth="max-w-lg">
         <div className="space-y-4">
-          <PermissoesEditor value={editPerm} onChange={setEditPerm} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="font-mono text-xs text-txt2 block mb-1">USUÁRIO</label>
+              <input value={editUsername} onChange={e => setEditUsername(e.target.value)}
+                className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt" />
+            </div>
+            <div>
+              <label className="font-mono text-xs text-txt2 block mb-1">NOVA SENHA</label>
+              <input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)}
+                placeholder="deixe em branco p/ manter"
+                className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt placeholder:text-txt3" />
+            </div>
+          </div>
+          <div>
+            <label className="font-mono text-xs text-txt2 block mb-2">PERMISSÕES</label>
+            <PermissoesEditor value={editPerm} onChange={setEditPerm} />
+          </div>
           <div className="flex gap-3 pt-2">
-            <HudButton
-              loading={updateConta.isPending}
-              onClick={() => {
-                if (!editConta) return
-                updateConta.mutate({ id: editConta.id, permissoes: editPerm }, {
-                  onSuccess: () => { addToast('success', 'Permissões atualizadas!'); setEditConta(null) },
-                  onError: e => onError(e, 'Erro ao salvar permissões.'),
-                })
-              }}
-              className="flex-1"
-            >
+            <HudButton loading={updateConta.isPending} onClick={salvarEdicao} className="flex-1">
               SALVAR
             </HudButton>
             <HudButton variant="ghost" onClick={() => setEditConta(null)} className="flex-1">CANCELAR</HudButton>

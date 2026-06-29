@@ -157,7 +157,7 @@ router.put('/contas/:id', requireAuth, canEditConfig, validateBody(updateContaSc
   const id = parseInt(String(req.params.id), 10)
   if (isNaN(id)) { res.status(400).json({ error: 'ID inválido' }); return }
 
-  const { permissoes, ativo, password } = req.body as { permissoes?: unknown; ativo?: boolean; password?: string }
+  const { username, permissoes, ativo, password } = req.body as { username?: string; permissoes?: unknown; ativo?: boolean; password?: string }
   // Hash ANTES de ler os dados — evita janela de corrida com o await
   const novoHash = password ? await bcrypt.hash(password, 12) : undefined
 
@@ -167,6 +167,14 @@ router.put('/contas/:id', requireAuth, canEditConfig, validateBody(updateContaSc
 
   const changes: string[] = []
 
+  if (username && username.trim() && username.trim() !== conta.username) {
+    const novo = username.trim()
+    if (data.contas.some(c => c.id !== id && c.username.toLowerCase() === novo.toLowerCase())) {
+      res.status(409).json({ error: 'Nome de usuário já existe' }); return
+    }
+    changes.push(`usuário: ${conta.username}→${novo}`)
+    conta.username = novo
+  }
   if (permissoes !== undefined) {
     conta.permissoes = normalizePermissoes(permissoes)
     changes.push('permissões atualizadas')

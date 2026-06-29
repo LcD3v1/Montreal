@@ -20,7 +20,7 @@ interface LoginForm {
   password: string
 }
 
-// Tratamento de cor do vídeo de fundo. 'none' = natural; o outro = dessaturado/avermelhado.
+// Tratamento de cor do vídeo de fundo (dessaturado/avermelhado pra casar com o tema)
 const VIDEO_FILTER = 'saturate(0.35) contrast(1.05) brightness(0.7) sepia(0.25) hue-rotate(-18deg)'
 
 const PARTICLES_OPTIONS: ISourceOptions = {

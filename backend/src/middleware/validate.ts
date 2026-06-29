@@ -49,6 +49,7 @@ export const createContaSchema = z.object({
 })
 
 export const updateContaSchema = z.object({
+  username: z.string().min(2).max(64).regex(/^[\w.\-]+$/, 'Usuário contém caracteres inválidos').optional(),
   permissoes: permissoesSchema.optional(),
   ativo: z.boolean().optional(),
   password: z.string().min(4).max(128).optional(),
