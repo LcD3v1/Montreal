@@ -130,6 +130,14 @@ export const comunicadoUpdateSchema = z.object({
   status:    z.enum(STATUS_COMUNICADO).optional(),
 }).refine(b => Object.keys(b).length > 0, { message: 'Nenhum campo fornecido' })
 
+export const lavagemSchema = z.object({
+  data:          z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
+  familia:       safeStr(1, 80),
+  dinheiroSujo:  z.number().min(0).max(1_000_000_000),
+  dinheiroLimpo: z.number().min(0).max(1_000_000_000),
+  observacoes:   safeStrOpt(300).default(''),
+})
+
 export const tabletMovimentoSchema = z.object({
   data:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
   tipo:        z.enum(['deposito', 'saque']),

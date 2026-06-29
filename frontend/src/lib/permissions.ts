@@ -16,6 +16,8 @@ export const AREAS: AreaDef[] = [
   { id: 'estoque',      label: 'Estoque' },
   { id: 'tablet',         label: 'Tablet (Saque/Depósito)' },
   { id: 'historicoTablet', label: 'Histórico Tablet' },
+  { id: 'lavagem',          label: 'Lavagem' },
+  { id: 'historicoLavagem', label: 'Histórico Lavagem' },
   { id: 'configuracoes', label: 'Configurações' },
 ]
 
@@ -53,5 +55,7 @@ export const AREA_ROUTE: Record<string, string> = {
   estoque: '/estoque',
   tablet: '/tablet',
   historicoTablet: '/tablet/historico',
+  lavagem: '/lavagem',
+  historicoLavagem: '/lavagem/historico',
   configuracoes: '/configuracoes',
 }

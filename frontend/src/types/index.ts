@@ -94,6 +94,24 @@ export interface BauEstoqueItem {
   quantidade: number
 }
 
+export interface LavagemRegistro {
+  id: number
+  data: string
+  familia: string
+  dinheiroSujo: number
+  dinheiroLimpo: number
+  responsavel?: string
+  observacoes?: string
+  criadoEm: string
+}
+
+export interface LavagemResponse {
+  lavagens: LavagemRegistro[]
+  total: number
+  totalSujo: number
+  totalLimpo: number
+}
+
 export type StatusComunicado = 'Aberto' | 'Em andamento' | 'Concluído' | 'Cancelado'
 
 export interface HistoricoAlteracao {

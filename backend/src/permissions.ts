@@ -14,6 +14,8 @@ export const AREA_IDS = [
   'estoque',
   'tablet',
   'historicoTablet',
+  'lavagem',
+  'historicoLavagem',
   'configuracoes',
 ] as const
 

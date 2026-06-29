@@ -74,6 +74,17 @@ export interface BauMovimento {
   observacoes?: string
 }
 
+export interface LavagemRegistro {
+  id: number
+  data: string
+  familia: string
+  dinheiroSujo: number
+  dinheiroLimpo: number
+  responsavel?: string
+  observacoes?: string
+  criadoEm: string
+}
+
 export type StatusComunicado = 'Aberto' | 'Em andamento' | 'Concluído' | 'Cancelado'
 
 export interface HistoricoAlteracao {
@@ -159,6 +170,7 @@ export interface MontrealData {
   tabletMovimentos: TabletMovimento[]
   ausencias: Ausencia[]
   comunicados: Comunicado[]
+  lavagens: LavagemRegistro[]
   nextMemId: number
   nextAcId: number
   nextRecId: number
@@ -167,6 +179,7 @@ export interface MontrealData {
   nextTabletMovId: number
   nextAusenciaId: number
   nextComunicadoId: number
+  nextLavagemId: number
   logo: string
   membrosOrder: number[]
 }

@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, PlusCircle, History, BarChart2,
   Users, Settings, Archive, Package, ClipboardList, CalendarOff,
-  Wallet, Receipt, Megaphone,
+  Wallet, Receipt, Megaphone, Droplets, FileText,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useLogo } from '@/hooks/useConfig'
@@ -42,6 +42,13 @@ const NAV_SECTIONS: { section: string; items: NavItem[] }[] = [
     items: [
       { to: '/tablet',           icon: Wallet,  label: 'SAQUE / DEPÓSITO', area: 'tablet' },
       { to: '/tablet/historico', icon: Receipt, label: 'HISTÓRICO TABLET', area: 'historicoTablet' },
+    ],
+  },
+  {
+    section: 'LAVAGEM',
+    items: [
+      { to: '/lavagem',           icon: Droplets, label: 'LAVAGEM',           area: 'lavagem' },
+      { to: '/lavagem/historico', icon: FileText, label: 'HISTÓRICO LAVAGEM', area: 'historicoLavagem' },
     ],
   },
   {

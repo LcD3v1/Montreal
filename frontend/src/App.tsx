@@ -17,6 +17,8 @@ import HistoricoBauPage from '@/components/sections/HistoricoBauPage'
 import EstoquePage from '@/components/sections/EstoquePage'
 import TabletPage from '@/components/sections/TabletPage'
 import HistoricoTabletPage from '@/components/sections/HistoricoTabletPage'
+import LavagemPage from '@/components/sections/LavagemPage'
+import HistoricoLavagemPage from '@/components/sections/HistoricoLavagemPage'
 import ConfiguracoesPage from '@/components/sections/ConfiguracoesPage'
 
 function destinoInicial(user: ReturnType<typeof useAuthStore.getState>['user']): string {
@@ -85,6 +87,8 @@ export default function App() {
             <Route path="estoque" element={<ProtectedRoute area="estoque"><EstoquePage /></ProtectedRoute>} />
             <Route path="tablet" element={<ProtectedRoute area="tablet"><TabletPage /></ProtectedRoute>} />
             <Route path="tablet/historico" element={<ProtectedRoute area="historicoTablet"><HistoricoTabletPage /></ProtectedRoute>} />
+            <Route path="lavagem" element={<ProtectedRoute area="lavagem"><LavagemPage /></ProtectedRoute>} />
+            <Route path="lavagem/historico" element={<ProtectedRoute area="historicoLavagem"><HistoricoLavagemPage /></ProtectedRoute>} />
             <Route path="configuracoes" element={<ProtectedRoute area="configuracoes"><ConfiguracoesPage /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

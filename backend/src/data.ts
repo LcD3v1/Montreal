@@ -30,6 +30,7 @@ const DEFAULT_DATA: MontrealData = {
   tabletMovimentos: [],
   ausencias: [],
   comunicados: [],
+  lavagens: [],
   nextMemId: 200,
   nextAcId: 1,
   nextRecId: 1,
@@ -38,6 +39,7 @@ const DEFAULT_DATA: MontrealData = {
   nextTabletMovId: 1,
   nextAusenciaId: 1,
   nextComunicadoId: 1,
+  nextLavagemId: 1,
   logo: '',
   membrosOrder: [],
 }
