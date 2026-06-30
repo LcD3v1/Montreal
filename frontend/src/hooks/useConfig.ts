@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import api from '@/lib/axios'
 import { queryClient } from '@/lib/queryClient'
-import type { RecCfg } from '@/types'
+import type { RecCfg, LavagemPorcentagem } from '@/types'
 
 export function useQrus() {
   return useQuery<string[]>({
@@ -91,6 +91,55 @@ export function useDeleteBauItem() {
   return useMutation({
     mutationFn: (nome: string) => api.delete(`/config/bau-itens/${encodeURIComponent(nome)}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'bau-itens'] }),
+  })
+}
+
+export function useBauGerenciaItens() {
+  return useQuery<string[]>({
+    queryKey: ['config', 'bau-gerencia-itens'],
+    queryFn: async () => (await api.get<string[]>('/config/bau-gerencia-itens')).data,
+  })
+}
+
+export function useAddBauGerenciaItem() {
+  return useMutation({
+    mutationFn: (nome: string) => api.post('/config/bau-gerencia-itens', { nome }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'bau-gerencia-itens'] }),
+  })
+}
+
+export function useDeleteBauGerenciaItem() {
+  return useMutation({
+    mutationFn: (nome: string) => api.delete(`/config/bau-gerencia-itens/${encodeURIComponent(nome)}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'bau-gerencia-itens'] }),
+  })
+}
+
+export function useLavagemPorcentagens() {
+  return useQuery<LavagemPorcentagem[]>({
+    queryKey: ['config', 'lavagem-porcentagens'],
+    queryFn: async () => (await api.get<LavagemPorcentagem[]>('/config/lavagem-porcentagens')).data,
+  })
+}
+
+export function useAddLavagemPorcentagem() {
+  return useMutation({
+    mutationFn: (body: { nome: string; valor: number }) => api.post('/config/lavagem-porcentagens', body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'lavagem-porcentagens'] }),
+  })
+}
+
+export function useUpdateLavagemPorcentagem() {
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: number; nome: string; valor: number }) => api.put(`/config/lavagem-porcentagens/${id}`, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'lavagem-porcentagens'] }),
+  })
+}
+
+export function useDeleteLavagemPorcentagem() {
+  return useMutation({
+    mutationFn: (id: number) => api.delete(`/config/lavagem-porcentagens/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'lavagem-porcentagens'] }),
   })
 }
 

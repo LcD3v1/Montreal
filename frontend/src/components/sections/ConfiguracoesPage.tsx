@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import {
   Image, List, Radio, Users,
-  Plus, Trash2, Archive, KeyRound,
+  Plus, Trash2, Archive, KeyRound, Crown, Percent, Check, X,
 } from 'lucide-react'
 import {
   useQrus, useAddQru, useDeleteQru,
   usePatentes, useAddPatente, useDeletePatente,
   useBauItens, useAddBauItem, useDeleteBauItem,
+  useBauGerenciaItens, useAddBauGerenciaItem, useDeleteBauGerenciaItem,
+  useLavagemPorcentagens, useAddLavagemPorcentagem, useUpdateLavagemPorcentagem, useDeleteLavagemPorcentagem,
   useLogo,
 } from '@/hooks/useConfig'
 import { useContas, useCreateConta, useUpdateConta, useDeleteConta } from '@/hooks/useContas'
@@ -17,14 +19,16 @@ import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import ModalOverlay from '@/components/ui/ModalOverlay'
 import LogoUploader from '@/components/ui/LogoUploader'
-import type { Conta, Permissoes } from '@/types'
+import type { Conta, Permissoes, LavagemPorcentagem } from '@/types'
 
 const TABS = [
-  { id: 'logo',     label: 'Logo',         icon: Image },
-  { id: 'patentes', label: 'Hierarquia',   icon: List },
-  { id: 'qrus',     label: 'Ações',        icon: Radio },
-  { id: 'bau',      label: 'Itens do Baú', icon: Archive },
-  { id: 'contas',   label: 'Contas',       icon: Users },
+  { id: 'logo',         label: 'Logo',              icon: Image },
+  { id: 'patentes',     label: 'Hierarquia',        icon: List },
+  { id: 'qrus',         label: 'Ações',             icon: Radio },
+  { id: 'bau',          label: 'Itens do Baú',      icon: Archive },
+  { id: 'bauGerencia',  label: 'Itens Baú Gerência', icon: Crown },
+  { id: 'porcentagens', label: 'Porcentagens',      icon: Percent },
+  { id: 'contas',       label: 'Contas',            icon: Users },
 ] as const
 
 function ListEditor({
@@ -63,6 +67,82 @@ function ListEditor({
         ))}
         {items.length === 0 && (
           <p className="font-mono text-xs text-txt3 text-center py-4">Nenhum item cadastrado</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PorcentagensEditor({
+  items, onAdd, onUpdate, onDelete, canEdit,
+}: {
+  items: LavagemPorcentagem[]
+  onAdd: (nome: string, valor: number) => void
+  onUpdate: (id: number, nome: string, valor: number) => void
+  onDelete: (id: number) => void
+  canEdit: boolean
+}) {
+  const [nome, setNome] = useState('')
+  const [valor, setValor] = useState<number | ''>('')
+  const [editId, setEditId] = useState<number | null>(null)
+  const [editNome, setEditNome] = useState('')
+  const [editValor, setEditValor] = useState<number | ''>('')
+
+  function add() {
+    if (!nome.trim() || valor === '' || Number(valor) < 0) return
+    onAdd(nome.trim(), Number(valor))
+    setNome(''); setValor('')
+  }
+  function startEdit(p: LavagemPorcentagem) {
+    setEditId(p.id); setEditNome(p.nome); setEditValor(p.valor)
+  }
+  function saveEdit() {
+    if (editId == null || !editNome.trim() || editValor === '' || Number(editValor) < 0) return
+    onUpdate(editId, editNome.trim(), Number(editValor))
+    setEditId(null)
+  }
+
+  return (
+    <div className="space-y-3">
+      {canEdit && (
+        <div className="flex gap-2">
+          <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome (ex: Padrão)"
+            className="input-gold flex-1 bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt" />
+          <input type="number" min={0} max={100} value={valor}
+            onChange={e => setValor(e.target.value ? Number(e.target.value) : '')} placeholder="%"
+            className="input-gold w-24 bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt" />
+          <HudButton size="sm" onClick={add}><Plus size={14} /></HudButton>
+        </div>
+      )}
+      <div className="space-y-1 max-h-72 overflow-y-auto">
+        {items.map(p => (
+          <div key={p.id} className="flex items-center justify-between px-3 py-2 bg-card2 border border-bdr rounded group gap-2">
+            {editId === p.id ? (
+              <>
+                <input value={editNome} onChange={e => setEditNome(e.target.value)}
+                  className="input-gold flex-1 bg-bg border border-bdr2 rounded px-2 py-1 text-xs font-mono text-txt" />
+                <input type="number" min={0} max={100} value={editValor}
+                  onChange={e => setEditValor(e.target.value ? Number(e.target.value) : '')}
+                  className="input-gold w-20 bg-bg border border-bdr2 rounded px-2 py-1 text-xs font-mono text-txt" />
+                <button onClick={saveEdit} className="text-green hover:text-green/80"><Check size={14} /></button>
+                <button onClick={() => setEditId(null)} className="text-txt3 hover:text-red"><X size={14} /></button>
+              </>
+            ) : (
+              <>
+                <span className="font-mono text-xs text-txt flex-1">{p.nome}</span>
+                <span className="font-mono text-xs text-gold">{p.valor}%</span>
+                {canEdit && (
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button onClick={() => startEdit(p)} className="text-txt3 hover:text-gold"><KeyRound size={12} /></button>
+                    <button onClick={() => onDelete(p.id)} className="text-txt3 hover:text-red"><Trash2 size={12} /></button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+        {items.length === 0 && (
+          <p className="font-mono text-xs text-txt3 text-center py-4">Nenhuma porcentagem cadastrada</p>
         )}
       </div>
     </div>
@@ -124,6 +204,15 @@ export default function ConfiguracoesPage() {
   const { data: bauItens = [] } = useBauItens()
   const addBauItem = useAddBauItem()
   const deleteBauItem = useDeleteBauItem()
+
+  const { data: bauGerenciaItens = [] } = useBauGerenciaItens()
+  const addBauGerenciaItem = useAddBauGerenciaItem()
+  const deleteBauGerenciaItem = useDeleteBauGerenciaItem()
+
+  const { data: porcentagens = [] } = useLavagemPorcentagens()
+  const addPorcentagem = useAddLavagemPorcentagem()
+  const updatePorcentagem = useUpdateLavagemPorcentagem()
+  const deletePorcentagem = useDeleteLavagemPorcentagem()
 
   const { data: logoData } = useLogo()
 
@@ -221,6 +310,26 @@ export default function ConfiguracoesPage() {
             <div>
               <h3 className="font-orbitron text-xs text-gold tracking-wider mb-4">ITENS DO BAÚ</h3>
               <ListEditor items={bauItens} onAdd={v => addBauItem.mutate(v)} onDelete={v => deleteBauItem.mutate(v)} placeholder="Novo item..." canEdit={canEditConfig} />
+            </div>
+          )}
+
+          {activeTab === 'bauGerencia' && (
+            <div>
+              <h3 className="font-orbitron text-xs text-gold tracking-wider mb-4">ITENS DO BAÚ DA GERÊNCIA</h3>
+              <ListEditor items={bauGerenciaItens} onAdd={v => addBauGerenciaItem.mutate(v)} onDelete={v => deleteBauGerenciaItem.mutate(v)} placeholder="Novo item..." canEdit={canEditConfig} />
+            </div>
+          )}
+
+          {activeTab === 'porcentagens' && (
+            <div>
+              <h3 className="font-orbitron text-xs text-gold tracking-wider mb-4">PORCENTAGENS DE LAVAGEM</h3>
+              <PorcentagensEditor
+                items={porcentagens}
+                onAdd={(nome, valor) => addPorcentagem.mutate({ nome, valor }, { onError: e => onError(e, 'Erro ao adicionar.') })}
+                onUpdate={(id, nome, valor) => updatePorcentagem.mutate({ id, nome, valor }, { onError: e => onError(e, 'Erro ao salvar.') })}
+                onDelete={id => deletePorcentagem.mutate(id, { onError: e => onError(e, 'Erro ao remover.') })}
+                canEdit={canEditConfig}
+              />
             </div>
           )}
 

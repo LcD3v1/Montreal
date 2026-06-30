@@ -15,6 +15,9 @@ import AusenciasPage from '@/components/sections/AusenciasPage'
 import BauPage from '@/components/sections/BauPage'
 import HistoricoBauPage from '@/components/sections/HistoricoBauPage'
 import EstoquePage from '@/components/sections/EstoquePage'
+import BauGerenciaPage from '@/components/sections/BauGerenciaPage'
+import HistoricoBauGerenciaPage from '@/components/sections/HistoricoBauGerenciaPage'
+import EstoqueGerenciaPage from '@/components/sections/EstoqueGerenciaPage'
 import TabletPage from '@/components/sections/TabletPage'
 import HistoricoTabletPage from '@/components/sections/HistoricoTabletPage'
 import LavagemPage from '@/components/sections/LavagemPage'
@@ -85,6 +88,9 @@ export default function App() {
             <Route path="bau" element={<ProtectedRoute area="bau"><BauPage /></ProtectedRoute>} />
             <Route path="bau/historico" element={<ProtectedRoute area="historicoBau"><HistoricoBauPage /></ProtectedRoute>} />
             <Route path="estoque" element={<ProtectedRoute area="estoque"><EstoquePage /></ProtectedRoute>} />
+            <Route path="gerencia/bau" element={<ProtectedRoute area="bauGerencia"><BauGerenciaPage /></ProtectedRoute>} />
+            <Route path="gerencia/historico" element={<ProtectedRoute area="historicoBauGerencia"><HistoricoBauGerenciaPage /></ProtectedRoute>} />
+            <Route path="gerencia/estoque" element={<ProtectedRoute area="estoqueGerencia"><EstoqueGerenciaPage /></ProtectedRoute>} />
             <Route path="tablet" element={<ProtectedRoute area="tablet"><TabletPage /></ProtectedRoute>} />
             <Route path="tablet/historico" element={<ProtectedRoute area="historicoTablet"><HistoricoTabletPage /></ProtectedRoute>} />
             <Route path="lavagem" element={<ProtectedRoute area="lavagem"><LavagemPage /></ProtectedRoute>} />

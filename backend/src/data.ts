@@ -27,19 +27,24 @@ const DEFAULT_DATA: MontrealData = {
   contas: [],
   bauItens: ['Munição', 'Colete', 'Kit Médico', 'Algema'],
   bauMovimentos: [],
+  bauGerenciaItens: ['Munição', 'Colete', 'Kit Médico', 'Algema'],
+  bauGerenciaMovimentos: [],
   tabletMovimentos: [],
   ausencias: [],
   comunicados: [],
   lavagens: [],
+  lavagemPorcentagens: [],
   nextMemId: 200,
   nextAcId: 1,
   nextRecId: 1,
   nextContaId: 1,
   nextBauMovId: 1,
+  nextBauGerenciaMovId: 1,
   nextTabletMovId: 1,
   nextAusenciaId: 1,
   nextComunicadoId: 1,
   nextLavagemId: 1,
+  nextLavagemPorcId: 1,
   logo: '',
   membrosOrder: [],
 }
@@ -54,8 +59,10 @@ export function readData(): MontrealData {
     const parsed = JSON.parse(raw) as MontrealData
     // Garante que campos novos existam em dados legados
     const merged = { ...DEFAULT_DATA, ...parsed }
-    // Migração: ações sem tipo viram 'tiro'
-    merged.acoes = (merged.acoes ?? []).map(a => ({ ...a, tipo: a.tipo ?? 'tiro' }))
+    // Migração: ações sem tipo viram 'tiro'; sem moeda viram 'Real'
+    merged.acoes = (merged.acoes ?? []).map(a => ({ ...a, tipo: a.tipo ?? 'tiro', moeda: a.moeda ?? 'Real' }))
+    // Migração: movimentos de tablet sem moeda viram 'Real'
+    merged.tabletMovimentos = (merged.tabletMovimentos ?? []).map(m => ({ ...m, moeda: m.moeda ?? 'Real' }))
     // Migração: contas com 'nivel' antigo → permissões por área
     merged.contas = (merged.contas ?? []).map(c => {
       const legado = c as Conta & { nivel?: string }

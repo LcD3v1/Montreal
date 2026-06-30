@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2 } from 'lucide-react'
-import { useTabletMovimentos, useDeleteTabletMovimento } from '@/hooks/useTablet'
+import { useBauGerenciaMovimentos, useDeleteBauGerenciaMovimento } from '@/hooks/useBauGerencia'
 import { useMembros } from '@/hooks/useMembros'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -9,27 +9,26 @@ import { canEdit as canEditArea } from '@/lib/permissions'
 import GlowCard from '@/components/ui/GlowCard'
 import LoadingHud from '@/components/ui/LoadingHud'
 import { formatDate } from '@/lib/utils'
-import { fmtMoeda } from './TabletPage'
-import type { Membro, TipoMovimentoTablet } from '@/types'
+import type { Membro, TipoMovimentoBau } from '@/types'
 
-type Filtro = '' | TipoMovimentoTablet
+type Filtro = '' | TipoMovimentoBau
 
 const TABS: [Filtro, string][] = [
   ['', 'TODOS'],
-  ['deposito', 'DEPÓSITOS'],
-  ['saque', 'SAQUES'],
+  ['entrada', 'ENTRADAS'],
+  ['saida', 'SAÍDAS'],
 ]
 
-export default function HistoricoTabletPage() {
+export default function HistoricoBauGerenciaPage() {
   const { user } = useAuthStore()
   const { addToast } = useUIStore()
   const [filtro, setFiltro] = useState<Filtro>('')
 
-  const { data: movData, isLoading } = useTabletMovimentos({ tipo: filtro || undefined, limit: 200 })
+  const { data: movData, isLoading } = useBauGerenciaMovimentos({ tipo: filtro || undefined, limit: 200 })
   const { data: membros } = useMembros()
-  const deleteMov = useDeleteTabletMovimento()
+  const deleteMov = useDeleteBauGerenciaMovimento()
 
-  const canEdit = canEditArea(user, 'historicoTablet')
+  const canEdit = canEditArea(user, 'historicoBauGerencia')
   const membroMap = new Map((membros ?? []).map((m: Membro) => [m.id, m]))
 
   async function handleDelete(id: number) {
@@ -48,12 +47,16 @@ export default function HistoricoTabletPage() {
 
   return (
     <div className="p-6 space-y-4 max-w-5xl mx-auto">
+      {/* Abas Todos / Entradas / Saídas */}
       <div className="flex gap-2">
         {TABS.map(([f, label]) => (
-          <button key={label} onClick={() => setFiltro(f)}
+          <button
+            key={label}
+            onClick={() => setFiltro(f)}
             className={`px-6 py-2.5 border rounded font-orbitron text-xs tracking-widest transition-all ${
               filtro === f ? 'border-red text-red bg-red/10' : 'border-bdr text-txt3 hover:text-txt'
-            }`}>
+            }`}
+          >
             {label}
           </button>
         ))}
@@ -64,7 +67,7 @@ export default function HistoricoTabletPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-bdr">
-                {['Data', 'Tipo', 'Valor', 'Membro', 'Responsável', 'Obs', ''].map(h => (
+                {['Data', 'Tipo', 'Item', 'Qtd', 'Membro', 'Responsável', 'Obs', ''].map(h => (
                   <th key={h} className="text-left font-mono text-xs text-txt3 tracking-wider px-4 py-3">{h}</th>
                 ))}
               </tr>
@@ -72,23 +75,22 @@ export default function HistoricoTabletPage() {
             <tbody>
               <AnimatePresence>
                 {movimentos.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-12 font-mono text-xs text-txt3">Nenhuma movimentação encontrada</td></tr>
+                  <tr><td colSpan={8} className="text-center py-12 font-mono text-xs text-txt3">Nenhuma movimentação encontrada</td></tr>
                 ) : movimentos.map(mov => (
                   <motion.tr key={mov.id} layout exit={{ opacity: 0, x: 200 }} transition={{ duration: 0.25 }}
                     className="border-b border-bdr/50 hover:bg-bdr/40 transition-colors group">
                     <td className="px-4 py-3 font-mono text-xs text-txt">{formatDate(mov.data)}</td>
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs px-2 py-0.5 rounded border" style={{
-                        color: mov.tipo === 'deposito' ? '#ffffff' : '#CC0000',
-                        borderColor: (mov.tipo === 'deposito' ? '#ffffff' : '#CC0000') + '40',
-                        background: (mov.tipo === 'deposito' ? '#ffffff' : '#CC0000') + '12',
+                        color: mov.tipo === 'entrada' ? '#ffffff' : '#CC0000',
+                        borderColor: (mov.tipo === 'entrada' ? '#ffffff' : '#CC0000') + '40',
+                        background: (mov.tipo === 'entrada' ? '#ffffff' : '#CC0000') + '12',
                       }}>
-                        {mov.tipo === 'deposito' ? 'DEPÓSITO' : 'SAQUE'}
+                        {mov.tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs" style={{ color: mov.tipo === 'deposito' ? '#ffffff' : '#CC0000' }}>
-                      {mov.tipo === 'deposito' ? '+' : '−'} {fmtMoeda(mov.valor, mov.moeda)}
-                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-txt">{mov.item}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-txt2">{mov.quantidade}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt2">{membroMap.get(mov.membroId)?.policial ?? `ID:${mov.membroId}`}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt3">{mov.responsavel ?? '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt3">{mov.observacoes || '—'}</td>

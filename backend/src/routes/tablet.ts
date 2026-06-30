@@ -5,18 +5,26 @@ import { validateBody, tabletMovimentoSchema } from '../middleware/validate'
 import { audit } from '../security/audit'
 import { readData, writeData } from '../data'
 import { broadcast } from '../realtime'
-import { TabletMovimento, MontrealData } from '../types'
+import { TabletMovimento, MontrealData, Moeda } from '../types'
 
 const router = Router()
 
-// Saldo do tablet = soma(depósitos) − soma(saques)
-function calcSaldo(data: MontrealData) {
-  let depositos = 0, saques = 0
-  for (const m of data.tabletMovimentos) {
-    if (m.tipo === 'deposito') depositos += m.valor
-    else saques += m.valor
+type SaldoMoeda = { depositos: number; saques: number; saldo: number }
+
+// Saldo do tablet POR MOEDA = soma(depósitos) − soma(saques)
+function calcSaldo(data: MontrealData): Record<Moeda, SaldoMoeda> {
+  const out: Record<Moeda, SaldoMoeda> = {
+    Real: { depositos: 0, saques: 0, saldo: 0 },
+    Dólar: { depositos: 0, saques: 0, saldo: 0 },
   }
-  return { depositos, saques, saldo: depositos - saques }
+  for (const m of data.tabletMovimentos) {
+    const moeda: Moeda = m.moeda ?? 'Real'
+    const acc = out[moeda] ?? (out[moeda] = { depositos: 0, saques: 0, saldo: 0 })
+    if (m.tipo === 'deposito') acc.depositos += m.valor
+    else acc.saques += m.valor
+  }
+  for (const k of Object.keys(out) as Moeda[]) out[k].saldo = out[k].depositos - out[k].saques
+  return out
 }
 
 router.get('/saldo', requireAuth, (_req: Request, res: Response): void => {
@@ -46,10 +54,11 @@ router.post('/movimentos', requireAuth, requireEdit('tablet'), validateBody(tabl
   if (!data.membros.some(m => m.id === body.membroId)) {
     res.status(400).json({ error: 'Membro inválido' }); return
   }
+  const moeda: Moeda = body.moeda ?? 'Real'
   if (body.tipo === 'saque') {
-    const saldo = calcSaldo(data).saldo
+    const saldo = calcSaldo(data)[moeda]?.saldo ?? 0
     if (body.valor > saldo) {
-      res.status(400).json({ error: `Saldo insuficiente. Disponível: ${saldo}` }); return
+      res.status(400).json({ error: `Saldo insuficiente em ${moeda}. Disponível: ${saldo}` }); return
     }
   }
 
@@ -59,13 +68,14 @@ router.post('/movimentos', requireAuth, requireEdit('tablet'), validateBody(tabl
     tipo: body.tipo,
     membroId: body.membroId,
     valor: body.valor,
+    moeda,
     responsavel: req.user!.username,
     observacoes: body.observacoes,
   }
   data.tabletMovimentos.push(novo)
   writeData(data)
 
-  audit('TABLET_MOVIMENTO', req, `${novo.tipo.toUpperCase()} ${novo.valor} (membro ${novo.membroId})`)
+  audit('TABLET_MOVIMENTO', req, `${novo.tipo.toUpperCase()} ${novo.valor} ${novo.moeda} (membro ${novo.membroId})`)
   broadcast({ resource: 'tablet', action: 'created', por: req.user!.username })
   res.status(201).json(novo)
 })

@@ -3,6 +3,7 @@ import {
   LayoutDashboard, PlusCircle, History, BarChart2,
   Users, Settings, Archive, Package, ClipboardList, CalendarOff,
   Wallet, Receipt, Megaphone, Droplets, FileText,
+  Crown,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useLogo } from '@/hooks/useConfig'
@@ -35,6 +36,14 @@ const NAV_SECTIONS: { section: string; items: NavItem[] }[] = [
       { to: '/bau',           icon: Archive,       label: 'BAÚ',           area: 'bau' },
       { to: '/bau/historico', icon: ClipboardList, label: 'HISTÓRICO BAÚ', area: 'historicoBau' },
       { to: '/estoque',       icon: Package,       label: 'ESTOQUE',       area: 'estoque' },
+    ],
+  },
+  {
+    section: 'GERÊNCIA',
+    items: [
+      { to: '/gerencia/bau',       icon: Crown,         label: 'BAÚ GERÊNCIA',       area: 'bauGerencia' },
+      { to: '/gerencia/historico', icon: ClipboardList, label: 'HISTÓRICO GERÊNCIA',  area: 'historicoBauGerencia' },
+      { to: '/gerencia/estoque',   icon: Package,       label: 'ESTOQUE GERÊNCIA',   area: 'estoqueGerencia' },
     ],
   },
   {

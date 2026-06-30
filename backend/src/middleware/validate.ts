@@ -93,6 +93,7 @@ export const acaoSchema = z.object({
   data:         z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
   horario:      z.string().regex(/^\d{2}:\d{2}$/, 'Horário inválido').optional(),
   valor:        z.number().min(0).max(1_000_000_000).optional(),
+  moeda:        z.enum(['Real', 'Dólar']).optional(),
   qru:          safeStr(1, 50),
   resultado:    z.enum([...RESULTADO_TIRO, ...RESULTADO_FUGA]),
   comandante:   z.string().max(100).optional(),
@@ -132,11 +133,18 @@ export const comunicadoUpdateSchema = z.object({
 }).refine(b => Object.keys(b).length > 0, { message: 'Nenhum campo fornecido' })
 
 export const lavagemSchema = z.object({
-  data:          z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
-  familia:       safeStr(1, 80),
-  dinheiroSujo:  z.number().min(0).max(1_000_000_000),
-  dinheiroLimpo: z.number().min(0).max(1_000_000_000),
-  observacoes:   safeStrOpt(300).default(''),
+  data:            z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
+  familia:         safeStr(1, 80),
+  dinheiroSujo:    z.number().min(0).max(1_000_000_000),
+  dinheiroLimpo:   z.number().min(0).max(1_000_000_000),
+  porcentagem:     z.number().min(0).max(100).optional(),
+  porcentagemNome: safeStrOpt(60).optional(),
+  observacoes:     safeStrOpt(300).default(''),
+})
+
+export const lavagemPorcentagemSchema = z.object({
+  nome:  safeStr(1, 60),
+  valor: z.number().min(0).max(100),
 })
 
 export const tabletMovimentoSchema = z.object({
@@ -144,6 +152,7 @@ export const tabletMovimentoSchema = z.object({
   tipo:        z.enum(['deposito', 'saque']),
   membroId:    z.number().int().positive(),
   valor:       z.number().positive().max(1_000_000_000),
+  moeda:       z.enum(['Real', 'Dólar']).default('Real'),
   observacoes: safeStrOpt(300).default(''),
 })
 

@@ -38,12 +38,15 @@ export interface ParticipanteExterno {
   patente?: string
 }
 
+export type Moeda = 'Real' | 'Dólar'
+
 export interface Acao {
   id: number
   tipo: TipoAcao
   data: string
   horario?: string
   valor?: number
+  moeda?: Moeda
   qru: string
   resultado: ResultadoAcao
   participants: ParticipanteAcao[]
@@ -59,6 +62,7 @@ export interface TabletMovimento {
   tipo: TipoMovimentoTablet
   membroId: number
   valor: number
+  moeda: Moeda
   responsavel?: string
   observacoes?: string
 }
@@ -80,9 +84,17 @@ export interface LavagemRegistro {
   familia: string
   dinheiroSujo: number
   dinheiroLimpo: number
+  porcentagem?: number
+  porcentagemNome?: string
   responsavel?: string
   observacoes?: string
   criadoEm: string
+}
+
+export interface LavagemPorcentagem {
+  id: number
+  nome: string
+  valor: number
 }
 
 export type StatusComunicado = 'Aberto' | 'Em andamento' | 'Concluído' | 'Cancelado'
@@ -167,19 +179,24 @@ export interface MontrealData {
   contas: Conta[]
   bauItens: string[]
   bauMovimentos: BauMovimento[]
+  bauGerenciaItens: string[]
+  bauGerenciaMovimentos: BauMovimento[]
   tabletMovimentos: TabletMovimento[]
   ausencias: Ausencia[]
   comunicados: Comunicado[]
   lavagens: LavagemRegistro[]
+  lavagemPorcentagens: LavagemPorcentagem[]
   nextMemId: number
   nextAcId: number
   nextRecId: number
   nextContaId: number
   nextBauMovId: number
+  nextBauGerenciaMovId: number
   nextTabletMovId: number
   nextAusenciaId: number
   nextComunicadoId: number
   nextLavagemId: number
+  nextLavagemPorcId: number
   logo: string
   membrosOrder: number[]
 }

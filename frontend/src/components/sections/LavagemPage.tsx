@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Send, Droplets } from 'lucide-react'
 import { useCreateLavagem } from '@/hooks/useLavagem'
+import { useLavagemPorcentagens } from '@/hooks/useConfig'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { canEdit as canEditArea } from '@/lib/permissions'
@@ -13,12 +14,35 @@ export default function LavagemPage() {
   const { user } = useAuthStore()
   const podeLavar = canEditArea(user, 'lavagem')
   const createMut = useCreateLavagem()
+  const { data: porcentagens } = useLavagemPorcentagens()
 
   const [familia, setFamilia] = useState('')
   const [sujo, setSujo] = useState<number | ''>('')
   const [limpo, setLimpo] = useState<number | ''>('')
+  const [porcId, setPorcId] = useState<number | ''>('')
   const [data, setData] = useState(new Date().toISOString().slice(0, 10))
   const [observacoes, setObservacoes] = useState('')
+
+  const porcSel = (porcentagens ?? []).find(p => p.id === porcId)
+
+  // Recalcula o limpo a partir do sujo + porcentagem selecionada
+  function recalcLimpo(novoSujo: number | '', valorPct?: number) {
+    if (novoSujo === '' || valorPct === undefined) return
+    setLimpo(Math.round(Number(novoSujo) * (valorPct / 100)))
+  }
+
+  function onSujoChange(v: string) {
+    const novo = v ? Number(v) : ''
+    setSujo(novo)
+    if (porcSel) recalcLimpo(novo, porcSel.valor)
+  }
+
+  function onPorcChange(v: string) {
+    const id = v ? Number(v) : ''
+    setPorcId(id)
+    const sel = (porcentagens ?? []).find(p => p.id === id)
+    if (sel) recalcLimpo(sujo, sel.valor)
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -26,9 +50,17 @@ export default function LavagemPage() {
     if (sujo === '' || Number(sujo) < 0) { addToast('error', 'Informe o dinheiro sujo.'); return }
     if (limpo === '' || Number(limpo) < 0) { addToast('error', 'Informe o dinheiro limpo.'); return }
     try {
-      await createMut.mutateAsync({ data, familia: familia.trim(), dinheiroSujo: Number(sujo), dinheiroLimpo: Number(limpo), observacoes: observacoes.trim() })
+      await createMut.mutateAsync({
+        data,
+        familia: familia.trim(),
+        dinheiroSujo: Number(sujo),
+        dinheiroLimpo: Number(limpo),
+        porcentagem: porcSel?.valor,
+        porcentagemNome: porcSel?.nome,
+        observacoes: observacoes.trim(),
+      })
       addToast('success', 'Lavagem registrada!')
-      setSujo(''); setLimpo(''); setObservacoes('')
+      setSujo(''); setLimpo(''); setObservacoes(''); setPorcId('')
     } catch (err: any) {
       addToast('error', err?.response?.data?.error || 'Erro ao registrar lavagem.')
     }
@@ -61,14 +93,30 @@ export default function LavagemPage() {
                 className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt placeholder-txt3" />
             </div>
 
+            <div>
+              <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">PORCENTAGEM</label>
+              <select value={porcId} onChange={e => onPorcChange(e.target.value)}
+                className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt">
+                <option value="">Sem porcentagem (manual)</option>
+                {(porcentagens ?? []).map(p => (
+                  <option key={p.id} value={p.id}>{p.nome} — {p.valor}%</option>
+                ))}
+              </select>
+              {(porcentagens ?? []).length === 0 && (
+                <p className="font-mono text-[10px] text-txt3 mt-1">Cadastre porcentagens em Configurações.</p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">DINHEIRO SUJO (R$)</label>
-                <input type="number" min={0} value={sujo} onChange={e => setSujo(e.target.value ? Number(e.target.value) : '')}
+                <input type="number" min={0} value={sujo} onChange={e => onSujoChange(e.target.value)}
                   className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt" />
               </div>
               <div>
-                <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">DINHEIRO LIMPO (R$)</label>
+                <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">
+                  DINHEIRO LIMPO (R$){porcSel ? <span className="text-gold"> · {porcSel.valor}%</span> : null}
+                </label>
                 <input type="number" min={0} value={limpo} onChange={e => setLimpo(e.target.value ? Number(e.target.value) : '')}
                   className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt" />
               </div>

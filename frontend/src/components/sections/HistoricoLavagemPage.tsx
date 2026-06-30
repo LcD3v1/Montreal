@@ -71,7 +71,7 @@ export default function HistoricoLavagemPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-bdr">
-                {['Data', 'Família', 'Sujo', 'Limpo', 'Taxa', 'Responsável', 'Obs', ''].map(h => (
+                {['Data', 'Família', 'Sujo', 'Limpo', '%', 'Taxa', 'Responsável', 'Obs', ''].map(h => (
                   <th key={h} className="text-left font-mono text-xs text-txt3 tracking-wider px-4 py-3">{h}</th>
                 ))}
               </tr>
@@ -79,7 +79,7 @@ export default function HistoricoLavagemPage() {
             <tbody>
               <AnimatePresence>
                 {filtrados.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center py-12 font-mono text-xs text-txt3">Nenhuma lavagem encontrada</td></tr>
+                  <tr><td colSpan={9} className="text-center py-12 font-mono text-xs text-txt3">Nenhuma lavagem encontrada</td></tr>
                 ) : filtrados.map(l => (
                   <motion.tr key={l.id} layout exit={{ opacity: 0, x: 200 }} transition={{ duration: 0.25 }}
                     className="border-b border-bdr/50 hover:bg-bdr/40 transition-colors group">
@@ -87,6 +87,7 @@ export default function HistoricoLavagemPage() {
                     <td className="px-4 py-3 font-mono text-xs text-txt">{l.familia}</td>
                     <td className="px-4 py-3 font-mono text-xs text-red">{fmtMoney(l.dinheiroSujo)}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt">{fmtMoney(l.dinheiroLimpo)}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-gold">{l.porcentagem != null ? `${l.porcentagem}%${l.porcentagemNome ? ` (${l.porcentagemNome})` : ''}` : '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt2">{fmtMoney(l.dinheiroSujo - l.dinheiroLimpo)}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt3">{l.responsavel ?? '—'}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt3">{l.observacoes || '—'}</td>

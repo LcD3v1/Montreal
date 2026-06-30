@@ -38,12 +38,15 @@ export interface ParticipanteExterno {
   patente?: string
 }
 
+export type Moeda = 'Real' | 'Dólar'
+
 export interface Acao {
   id: number
   tipo: TipoAcao
   data: string
   horario?: string
   valor?: number
+  moeda?: Moeda
   qru: string
   resultado: ResultadoAcao
   participants: ParticipanteAcao[]
@@ -59,15 +62,17 @@ export interface TabletMovimento {
   tipo: TipoMovimentoTablet
   membroId: number
   valor: number
+  moeda: Moeda
   responsavel?: string
   observacoes?: string
 }
 
-export interface TabletSaldo {
+export interface SaldoMoeda {
   depositos: number
   saques: number
   saldo: number
 }
+export type TabletSaldo = Record<Moeda, SaldoMoeda>
 
 export interface TabletMovimentosResponse {
   movimentos: TabletMovimento[]
@@ -100,9 +105,17 @@ export interface LavagemRegistro {
   familia: string
   dinheiroSujo: number
   dinheiroLimpo: number
+  porcentagem?: number
+  porcentagemNome?: string
   responsavel?: string
   observacoes?: string
   criadoEm: string
+}
+
+export interface LavagemPorcentagem {
+  id: number
+  nome: string
+  valor: number
 }
 
 export interface LavagemResponse {

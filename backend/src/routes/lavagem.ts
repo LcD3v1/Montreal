@@ -29,7 +29,7 @@ router.get('/', requireAuth, requireView('historicoLavagem'), (req: Request, res
 // ── Registrar ──────────────────────────────────────────────────────────────────
 
 router.post('/', requireAuth, requireEdit('lavagem'), validateBody(lavagemSchema), (req: Request, res: Response): void => {
-  const body = req.body as { data: string; familia: string; dinheiroSujo: number; dinheiroLimpo: number; observacoes?: string }
+  const body = req.body as { data: string; familia: string; dinheiroSujo: number; dinheiroLimpo: number; porcentagem?: number; porcentagemNome?: string; observacoes?: string }
   const data = readData()
 
   const novo: LavagemRegistro = {
@@ -38,6 +38,8 @@ router.post('/', requireAuth, requireEdit('lavagem'), validateBody(lavagemSchema
     familia: body.familia,
     dinheiroSujo: body.dinheiroSujo,
     dinheiroLimpo: body.dinheiroLimpo,
+    porcentagem: body.porcentagem,
+    porcentagemNome: body.porcentagemNome,
     responsavel: req.user!.username,
     observacoes: body.observacoes,
     criadoEm: new Date().toISOString(),

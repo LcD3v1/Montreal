@@ -11,7 +11,7 @@ import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import LoadingHud from '@/components/ui/LoadingHud'
 import { formatDate } from '@/lib/utils'
-import { fmtMoney } from './TabletPage'
+import { fmtMoeda } from './TabletPage'
 import type { Acao, Membro, TipoAcao } from '@/types'
 import api from '@/lib/axios'
 
@@ -166,7 +166,7 @@ export default function HistoricoPage() {
                     <td className="px-4 py-3 font-mono text-xs text-txt3">#{acao.id}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt">{formatDate(acao.data)}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt2">{acao.horario || '—'}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-txt">{fmtMoney(acao.valor ?? 0)}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-txt">{fmtMoeda(acao.valor ?? 0, acao.moeda)}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt2">{acao.qru}</td>
                     <td className="px-4 py-3">
                       <span

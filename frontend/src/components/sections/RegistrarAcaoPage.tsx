@@ -12,12 +12,13 @@ import { canEdit as canEditArea } from '@/lib/permissions'
 import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import LoadingHud from '@/components/ui/LoadingHud'
-import type { ResultadoAcao, TipoAcao, Membro } from '@/types'
+import type { ResultadoAcao, TipoAcao, Membro, Moeda } from '@/types'
 
 interface FormData {
   data: string
   horario: string
   valor: number
+  moeda: Moeda
   qru: string
   resultado: ResultadoAcao
 }
@@ -53,6 +54,7 @@ export default function RegistrarAcaoPage() {
       data: new Date().toISOString().slice(0, 10),
       horario: new Date().toTimeString().slice(0, 5),
       valor: 0,
+      moeda: 'Real',
       resultado: 'Vitória',
     },
   })
@@ -80,6 +82,7 @@ export default function RegistrarAcaoPage() {
         data: data.data,
         horario: data.horario || undefined,
         valor: Number(data.valor) || 0,
+        moeda: data.moeda,
         qru: data.qru,
         resultado: data.resultado,
         participants: selectedMembros,
@@ -143,8 +146,8 @@ export default function RegistrarAcaoPage() {
               {errors.data && <p className="text-red text-xs font-mono mt-1">{errors.data.message}</p>}
             </div>
 
-            {/* Horário + Valor */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Horário + Valor + Moeda */}
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">HORÁRIO</label>
                 <input
@@ -154,12 +157,22 @@ export default function RegistrarAcaoPage() {
                 />
               </div>
               <div>
-                <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">VALOR (R$)</label>
+                <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">VALOR</label>
                 <input
                   {...register('valor', { valueAsNumber: true })}
                   type="number" min={0}
                   className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt"
                 />
+              </div>
+              <div>
+                <label className="font-mono text-xs text-txt2 tracking-wider block mb-1.5">MOEDA</label>
+                <select
+                  {...register('moeda')}
+                  className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt"
+                >
+                  <option value="Real">Real (R$)</option>
+                  <option value="Dólar">Dólar (US$)</option>
+                </select>
               </div>
             </div>
 

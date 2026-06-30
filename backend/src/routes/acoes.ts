@@ -14,7 +14,7 @@ router.get('/export/csv', requireAuth, (req: Request, res: Response): void => {
   const membroMap = new Map(data.membros.map(m => [m.id, m]))
   const { tipo } = req.query
 
-  const rows: string[] = ['ID,Tipo,Data,Hora,Valor,QRU,Resultado,Participantes']
+  const rows: string[] = ['ID,Tipo,Data,Hora,Valor,Moeda,QRU,Resultado,Participantes']
   let sorted = [...data.acoes].sort((a, b) => b.id - a.id)
   if (tipo === 'tiro' || tipo === 'fuga') sorted = sorted.filter(a => a.tipo === tipo)
 
@@ -31,7 +31,7 @@ router.get('/export/csv', requireAuth, (req: Request, res: Response): void => {
       .join(' | ')
 
     const participantes = [membersStr, extrasStr].filter(Boolean).join(' | ')
-    rows.push([acao.id, acao.tipo, acao.data, acao.horario ?? '', acao.valor ?? 0, acao.qru, acao.resultado, `"${participantes}"`].join(','))
+    rows.push([acao.id, acao.tipo, acao.data, acao.horario ?? '', acao.valor ?? 0, acao.moeda ?? 'Real', acao.qru, acao.resultado, `"${participantes}"`].join(','))
   }
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
@@ -78,6 +78,7 @@ router.post('/', requireAuth, requireEdit('registrar'), validateBody(acaoSchema)
     data: body.data,
     horario: body.horario,
     valor: body.valor ?? 0,
+    moeda: body.moeda ?? 'Real',
     qru: body.qru,
     resultado: body.resultado,
     participants: body.participants,

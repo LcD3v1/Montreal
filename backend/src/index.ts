@@ -13,6 +13,7 @@ import membrosRoutes from './routes/membros'
 import acoesRoutes from './routes/acoes'
 import configRoutes from './routes/config'
 import bauRoutes from './routes/bau'
+import bauGerenciaRoutes from './routes/bauGerencia'
 import tabletRoutes from './routes/tablet'
 import ausenciasRoutes from './routes/ausencias'
 import comunicadosRoutes from './routes/comunicados'
@@ -59,6 +60,7 @@ app.use('/api/membros', membrosRoutes)
 app.use('/api/acoes', acoesRoutes)
 app.use('/api/config', configRoutes)
 app.use('/api/bau', bauRoutes)
+app.use('/api/bau-gerencia', bauGerenciaRoutes)
 app.use('/api/tablet', tabletRoutes)
 app.use('/api/ausencias', ausenciasRoutes)
 app.use('/api/comunicados', comunicadosRoutes)

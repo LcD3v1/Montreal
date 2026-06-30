@@ -8,7 +8,7 @@ import {
   qruSchema, patenteSchema, cargoSchema,
   createContaSchema, updateContaSchema,
   logoSchema, recCfgSchema,
-  reorderPatenteSchema, bauItemSchema,
+  reorderPatenteSchema, bauItemSchema, lavagemPorcentagemSchema,
 } from '../middleware/validate'
 import { audit, readAuditLog } from '../security/audit'
 import { readData, writeData } from '../data'
@@ -117,6 +117,65 @@ router.delete('/bau-itens/:nome', requireAuth, canEditConfig, (req: Request, res
   writeData(data)
   audit('CONFIG_UPDATED', req, `Item de baú removido: ${nome}`)
   res.json(data.bauItens)
+})
+
+// ── Baú Gerência: itens ───────────────────────────────────────────────────────
+
+router.get('/bau-gerencia-itens', requireAuth, (_req, res) => res.json(readData().bauGerenciaItens))
+
+router.post('/bau-gerencia-itens', requireAuth, canEditConfig, validateBody(bauItemSchema), (req: Request, res: Response): void => {
+  const { nome } = req.body as { nome: string }
+  const data = readData()
+  if (data.bauGerenciaItens.includes(nome)) { res.status(409).json({ error: 'Item já existe' }); return }
+  data.bauGerenciaItens.push(nome)
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Item de baú gerência criado: ${nome}`)
+  res.status(201).json(data.bauGerenciaItens)
+})
+
+router.delete('/bau-gerencia-itens/:nome', requireAuth, canEditConfig, (req: Request, res: Response): void => {
+  const nome = String(req.params.nome).slice(0, 50)
+  const data = readData()
+  data.bauGerenciaItens = data.bauGerenciaItens.filter(i => i !== nome)
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Item de baú gerência removido: ${nome}`)
+  res.json(data.bauGerenciaItens)
+})
+
+// ── Lavagem: porcentagens ─────────────────────────────────────────────────────
+
+router.get('/lavagem-porcentagens', requireAuth, (_req, res) => res.json(readData().lavagemPorcentagens))
+
+router.post('/lavagem-porcentagens', requireAuth, canEditConfig, validateBody(lavagemPorcentagemSchema), (req: Request, res: Response): void => {
+  const { nome, valor } = req.body as { nome: string; valor: number }
+  const data = readData()
+  const nova = { id: data.nextLavagemPorcId, nome, valor }
+  data.lavagemPorcentagens.push(nova)
+  data.nextLavagemPorcId++
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Porcentagem de lavagem criada: ${nome} (${valor}%)`)
+  res.status(201).json(data.lavagemPorcentagens)
+})
+
+router.put('/lavagem-porcentagens/:id', requireAuth, canEditConfig, validateBody(lavagemPorcentagemSchema), (req: Request, res: Response): void => {
+  const id = parseInt(String(req.params.id), 10)
+  const { nome, valor } = req.body as { nome: string; valor: number }
+  const data = readData()
+  const p = data.lavagemPorcentagens.find(x => x.id === id)
+  if (!p) { res.status(404).json({ error: 'Porcentagem não encontrada' }); return }
+  p.nome = nome; p.valor = valor
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Porcentagem de lavagem atualizada: ${nome} (${valor}%)`)
+  res.json(data.lavagemPorcentagens)
+})
+
+router.delete('/lavagem-porcentagens/:id', requireAuth, canEditConfig, (req: Request, res: Response): void => {
+  const id = parseInt(String(req.params.id), 10)
+  const data = readData()
+  data.lavagemPorcentagens = data.lavagemPorcentagens.filter(p => p.id !== id)
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Porcentagem de lavagem removida: ${id}`)
+  res.json(data.lavagemPorcentagens)
 })
 
 // ── Contas ────────────────────────────────────────────────────────────────────

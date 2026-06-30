@@ -12,7 +12,7 @@ import { useQrus } from '@/hooks/useConfig'
 import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import LoadingHud from '@/components/ui/LoadingHud'
-import { fmtMoney } from './TabletPage'
+import { fmtMoeda } from './TabletPage'
 import type { Membro, Acao, TipoAcao } from '@/types'
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -139,8 +139,10 @@ export default function EstatisticasPage() {
     y += 6
     autoTable(doc, {
       startY: y,
-      head: [['Total', n(L.pos), n(L.neg), ...(L.neu ? [n(L.neu)] : []), 'Win Rate', 'Valor total']],
-      body: [[total, pos, neg, ...(L.neu ? [neu] : []), `${winRateOf(filteredAcoes)}%`, fmtMoney(filteredAcoes.reduce((s, a) => s + (a.valor ?? 0), 0))]],
+      head: [['Total', n(L.pos), n(L.neg), ...(L.neu ? [n(L.neu)] : []), 'Win Rate', 'Valor (R$)', 'Valor (US$)']],
+      body: [[total, pos, neg, ...(L.neu ? [neu] : []), `${winRateOf(filteredAcoes)}%`,
+        fmtMoeda(filteredAcoes.filter(a => (a.moeda ?? 'Real') === 'Real').reduce((s, a) => s + (a.valor ?? 0), 0), 'Real'),
+        fmtMoeda(filteredAcoes.filter(a => a.moeda === 'Dólar').reduce((s, a) => s + (a.valor ?? 0), 0), 'Dólar')]],
       headStyles: { fillColor: [50, 50, 50], textColor: [255, 255, 255], fontSize: 7, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8, halign: 'center' },
       theme: 'grid', margin: { left: M, right: M },
@@ -222,7 +224,7 @@ export default function EstatisticasPage() {
             </button>
           )}
           <span className="font-mono text-xs text-txt2 ml-auto">
-            Valor total: <span className="text-gold">{fmtMoney(filteredAcoes.reduce((s, a) => s + (a.valor ?? 0), 0))}</span>
+            Total: <span className="text-gold">{fmtMoeda(filteredAcoes.filter(a => (a.moeda ?? 'Real') === 'Real').reduce((s, a) => s + (a.valor ?? 0), 0), 'Real')}</span> <span className="text-gold">{fmtMoeda(filteredAcoes.filter(a => a.moeda === 'Dólar').reduce((s, a) => s + (a.valor ?? 0), 0), 'Dólar')}</span>
             <span className="mx-2 text-txt3">·</span>
             {filteredAcoes.length}{filteredAcoes.length !== acoes.length ? ` / ${acoes.length} ações` : ' ações'}
           </span>
