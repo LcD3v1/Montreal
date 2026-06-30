@@ -11,7 +11,7 @@ import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import LoadingHud from '@/components/ui/LoadingHud'
 import { formatDate } from '@/lib/utils'
-import { fmtMoeda } from './TabletPage'
+import { fmtMoeda } from '@/lib/money'
 import type { Acao, Membro, TipoAcao } from '@/types'
 import api from '@/lib/axios'
 

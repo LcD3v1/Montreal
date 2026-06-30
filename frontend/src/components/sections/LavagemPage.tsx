@@ -5,9 +5,10 @@ import { useLavagemPorcentagens } from '@/hooks/useConfig'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { canEdit as canEditArea } from '@/lib/permissions'
+import { getApiErrorMessage } from '@/lib/apiError'
+import { fmtMoney } from '@/lib/money'
 import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
-import { fmtMoney } from './TabletPage'
 
 export default function LavagemPage() {
   const { addToast } = useUIStore()
@@ -61,8 +62,8 @@ export default function LavagemPage() {
       })
       addToast('success', 'Lavagem registrada!')
       setSujo(''); setLimpo(''); setObservacoes(''); setPorcId('')
-    } catch (err: any) {
-      addToast('error', err?.response?.data?.error || 'Erro ao registrar lavagem.')
+    } catch (err: unknown) {
+      addToast('error', getApiErrorMessage(err, 'Erro ao registrar lavagem.'))
     }
   }
 

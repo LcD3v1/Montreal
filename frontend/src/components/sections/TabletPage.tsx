@@ -5,14 +5,11 @@ import { useMembros } from '@/hooks/useMembros'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { canEdit as canEditArea } from '@/lib/permissions'
+import { getApiErrorMessage } from '@/lib/apiError'
+import { MOEDAS, moedaSymbol, fmtMoeda } from '@/lib/money'
 import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import type { Membro, TipoMovimentoTablet, Moeda } from '@/types'
-
-export const MOEDAS: Moeda[] = ['Real', 'Dólar']
-export const moedaSymbol = (m?: Moeda) => (m === 'Dólar' ? 'US$' : 'R$')
-export const fmtMoney = (n: number) => 'R$ ' + (n ?? 0).toLocaleString('pt-BR')
-export const fmtMoeda = (n: number, m?: Moeda) => moedaSymbol(m) + ' ' + (n ?? 0).toLocaleString('pt-BR')
 
 export default function TabletPage() {
   const { addToast } = useUIStore()
@@ -37,8 +34,8 @@ export default function TabletPage() {
       await createMov.mutateAsync({ tipo, moeda, membroId: Number(membroId), valor: Number(valor), data, observacoes: observacoes.trim() })
       addToast('success', `${tipo === 'deposito' ? 'Depósito' : 'Saque'} registrado!`)
       setValor(''); setObservacoes('')
-    } catch (err: any) {
-      addToast('error', err?.response?.data?.error || 'Erro ao registrar movimentação.')
+    } catch (err: unknown) {
+      addToast('error', getApiErrorMessage(err, 'Erro ao registrar movimentação.'))
     }
   }
 

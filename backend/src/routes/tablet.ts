@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth } from '../middleware/auth'
-import { requireEdit } from '../middleware/roles'
+import { requireEdit, requireView } from '../middleware/roles'
 import { validateBody, tabletMovimentoSchema } from '../middleware/validate'
 import { audit } from '../security/audit'
 import { readData, writeData } from '../data'
@@ -27,11 +27,11 @@ function calcSaldo(data: MontrealData): Record<Moeda, SaldoMoeda> {
   return out
 }
 
-router.get('/saldo', requireAuth, (_req: Request, res: Response): void => {
+router.get('/saldo', requireAuth, requireView('tablet'), (_req: Request, res: Response): void => {
   res.json(calcSaldo(readData()))
 })
 
-router.get('/movimentos', requireAuth, (req: Request, res: Response): void => {
+router.get('/movimentos', requireAuth, requireView('historicoTablet'), (req: Request, res: Response): void => {
   const data = readData()
   const { tipo, membroId, page, limit } = req.query
 

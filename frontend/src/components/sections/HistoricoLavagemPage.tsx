@@ -8,7 +8,7 @@ import { canEdit as canEditArea } from '@/lib/permissions'
 import GlowCard from '@/components/ui/GlowCard'
 import LoadingHud from '@/components/ui/LoadingHud'
 import { formatDate } from '@/lib/utils'
-import { fmtMoney } from './TabletPage'
+import { fmtMoney } from '@/lib/money'
 
 export default function HistoricoLavagemPage() {
   const { user } = useAuthStore()

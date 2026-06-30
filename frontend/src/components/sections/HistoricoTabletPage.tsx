@@ -9,7 +9,7 @@ import { canEdit as canEditArea } from '@/lib/permissions'
 import GlowCard from '@/components/ui/GlowCard'
 import LoadingHud from '@/components/ui/LoadingHud'
 import { formatDate } from '@/lib/utils'
-import { fmtMoeda } from './TabletPage'
+import { fmtMoeda } from '@/lib/money'
 import type { Membro, TipoMovimentoTablet } from '@/types'
 
 type Filtro = '' | TipoMovimentoTablet

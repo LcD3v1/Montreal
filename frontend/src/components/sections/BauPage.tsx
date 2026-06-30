@@ -6,6 +6,7 @@ import { useMembros } from '@/hooks/useMembros'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { canEdit as canEditArea } from '@/lib/permissions'
+import { getApiErrorMessage } from '@/lib/apiError'
 import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import type { Membro, TipoMovimentoBau } from '@/types'
@@ -48,8 +49,8 @@ export default function BauPage() {
       await createLote.mutateAsync({ tipo, membroId: Number(membroId), data, observacoes: observacoes.trim(), itens: itensLimpos })
       addToast('success', `${tipo === 'entrada' ? 'Entrada' : 'Retirada'} de ${itensLimpos.length} item(ns) registrada!`)
       setLinhas([linhaVazia()]); setObservacoes('')
-    } catch (err: any) {
-      addToast('error', err?.response?.data?.error || 'Erro ao registrar movimentação.')
+    } catch (err: unknown) {
+      addToast('error', getApiErrorMessage(err, 'Erro ao registrar movimentação.'))
     }
   }
 

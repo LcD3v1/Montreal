@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth } from '../middleware/auth'
-import { requireEdit } from '../middleware/roles'
+import { requireEdit, requireView } from '../middleware/roles'
 import { validateBody, bauMovimentoSchema, bauLoteSchema } from '../middleware/validate'
 import { audit } from '../security/audit'
 import { readData, writeData } from '../data'
@@ -24,7 +24,7 @@ function calcEstoque(data: MontrealData) {
 
 // ── Movimentações ─────────────────────────────────────────────────────────────
 
-router.get('/movimentos', requireAuth, (req: Request, res: Response): void => {
+router.get('/movimentos', requireAuth, requireView('historicoBau'), (req: Request, res: Response): void => {
   const data = readData()
   const { tipo, item, membroId, page, limit } = req.query
 
@@ -151,7 +151,7 @@ router.delete('/movimentos/:id', requireAuth, requireEdit('historicoBau'), (req:
 
 // ── Estoque (calculado) ───────────────────────────────────────────────────────
 
-router.get('/estoque', requireAuth, (_req: Request, res: Response): void => {
+router.get('/estoque', requireAuth, requireView('estoque'), (_req: Request, res: Response): void => {
   res.json(calcEstoque(readData()))
 })
 

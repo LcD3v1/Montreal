@@ -6,6 +6,7 @@ import { useMembros } from '@/hooks/useMembros'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { canEdit as canEditArea } from '@/lib/permissions'
+import { getApiErrorMessage } from '@/lib/apiError'
 import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import LoadingHud from '@/components/ui/LoadingHud'
@@ -49,8 +50,8 @@ export default function AusenciasPage() {
       await createAus.mutateAsync({ membroId: Number(membroId), dataInicio, dataFim, motivo: motivo.trim() })
       addToast('success', 'Ausência registrada! Membro marcado como Ausência.')
       setMotivo('')
-    } catch (err: any) {
-      addToast('error', err?.response?.data?.error || 'Erro ao registrar ausência.')
+    } catch (err: unknown) {
+      addToast('error', getApiErrorMessage(err, 'Erro ao registrar ausência.'))
     }
   }
 

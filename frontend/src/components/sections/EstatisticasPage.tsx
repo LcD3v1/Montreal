@@ -12,7 +12,7 @@ import { useQrus } from '@/hooks/useConfig'
 import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import LoadingHud from '@/components/ui/LoadingHud'
-import { fmtMoeda } from './TabletPage'
+import { fmtMoeda } from '@/lib/money'
 import type { Membro, Acao, TipoAcao } from '@/types'
 
 const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -25,6 +25,7 @@ const LABELS: Record<TipoAcao, { pos: string; neg: string; neu?: string }> = {
 
 const ROW_VARIANTS = { hidden: { opacity: 0, x: -10 }, visible: { opacity: 1, x: 0 } }
 const TABLE_VARIANTS = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }
+type JsPDFWithAutoTable = jsPDF & { lastAutoTable?: { finalY?: number } }
 
 const CustomTooltip = ({ active, payload, label }: {
   active?: boolean; payload?: Array<{ name: string; value: number; fill: string }>; label?: string
@@ -147,7 +148,7 @@ export default function EstatisticasPage() {
       bodyStyles: { fontSize: 8, halign: 'center' },
       theme: 'grid', margin: { left: M, right: M },
     })
-    y = ((doc as any).lastAutoTable?.finalY ?? y + 20) + 8
+    y = ((doc as JsPDFWithAutoTable).lastAutoTable?.finalY ?? y + 20) + 8
 
     sectionTitle('PERFORMANCE POR MEMBRO', y)
     y += 6
@@ -162,7 +163,7 @@ export default function EstatisticasPage() {
       alternateRowStyles: { fillColor: [245, 245, 245] },
       theme: 'grid', margin: { left: M, right: M },
     })
-    y = ((doc as any).lastAutoTable?.finalY ?? y + 50) + 8
+    y = ((doc as JsPDFWithAutoTable).lastAutoTable?.finalY ?? y + 50) + 8
 
     if (y > 250) { doc.addPage(); y = 20 }
     sectionTitle('RESULTADOS POR AÇÃO', y)
