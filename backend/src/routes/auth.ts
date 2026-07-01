@@ -9,6 +9,7 @@ import { checkLockout, recordFailed, clearAttempts } from '../security/bruteForc
 import { revokeToken } from '../security/tokenBlacklist'
 import { audit } from '../security/audit'
 import { readData, writeData } from '../data'
+import { resolveContaPermissoes } from '../permissions'
 
 const router = Router()
 
@@ -59,7 +60,12 @@ router.post(
 
     res.json({
       token,
-      user: { contaId: conta.id, username: conta.username, permissoes: conta.permissoes },
+      user: {
+        contaId: conta.id,
+        username: conta.username,
+        cargoPermissaoId: conta.cargoPermissaoId,
+        permissoes: resolveContaPermissoes(conta, data.cargosPermissao),
+      },
     })
   },
 )
@@ -84,7 +90,12 @@ router.get('/me', requireAuth, (req: Request, res: Response): void => {
     return
   }
 
-  res.json({ contaId: conta.id, username: conta.username, permissoes: conta.permissoes })
+  res.json({
+    contaId: conta.id,
+    username: conta.username,
+    cargoPermissaoId: conta.cargoPermissaoId,
+    permissoes: resolveContaPermissoes(conta, data.cargosPermissao),
+  })
 })
 
 // PUT /api/auth/change-password

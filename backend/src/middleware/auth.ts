@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import { AuthPayload, Permissoes } from '../types'
 import { isRevoked } from '../security/tokenBlacklist'
 import { readData } from '../data'
+import { resolveContaPermissoes } from '../permissions'
 
 declare global {
   namespace Express {
@@ -37,13 +38,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 
   // 2. Conta ainda existe e está ativa? (efeito imediato ao desativar)
   // readData() é rápido — lê arquivo local em memória do SO
-  const conta = readData().contas.find(c => c.id === payload.contaId)
+  const data = readData()
+  const conta = data.contas.find(c => c.id === payload.contaId)
   if (!conta || !conta.ativo) {
     res.status(401).json({ error: 'CONTA_DESATIVADA' })
     return
   }
 
   // Anexa as permissões ATUAIS da conta (efeito imediato ao alterar permissões)
-  req.user = { ...payload, permissoes: conta.permissoes }
+  req.user = { ...payload, permissoes: resolveContaPermissoes(conta, data.cargosPermissao) }
   next()
 }

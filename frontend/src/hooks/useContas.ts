@@ -12,7 +12,7 @@ export function useContas() {
 
 export function useCreateConta() {
   return useMutation({
-    mutationFn: (body: { username: string; password: string; permissoes: Permissoes }) =>
+    mutationFn: (body: { username: string; password: string; cargoPermissaoId: number; permissoes?: Permissoes }) =>
       api.post('/config/contas', body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'contas'] }),
   })
@@ -20,7 +20,7 @@ export function useCreateConta() {
 
 export function useUpdateConta() {
   return useMutation({
-    mutationFn: ({ id, ...body }: { id: number; username?: string; permissoes?: Permissoes; ativo?: boolean; password?: string }) =>
+    mutationFn: ({ id, ...body }: { id: number; username?: string; cargoPermissaoId?: number; permissoes?: Permissoes; ativo?: boolean; password?: string }) =>
       api.put(`/config/contas/${id}`, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'contas'] }),
   })

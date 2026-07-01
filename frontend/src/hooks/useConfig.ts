@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import api from '@/lib/axios'
 import { queryClient } from '@/lib/queryClient'
-import type { RecCfg, LavagemPorcentagem } from '@/types'
+import type { RecCfg, LavagemPorcentagem, CargoPermissao, Permissoes } from '@/types'
 
 export function useQrus() {
   return useQuery<string[]>({
@@ -70,6 +70,43 @@ export function useDeleteCargo() {
   return useMutation({
     mutationFn: (nome: string) => api.delete(`/config/cargos/${encodeURIComponent(nome)}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'cargos'] }),
+  })
+}
+
+export function useCargosPermissao() {
+  return useQuery<CargoPermissao[]>({
+    queryKey: ['config', 'cargos-permissao'],
+    queryFn: async () => (await api.get<CargoPermissao[]>('/config/cargos-permissao')).data,
+  })
+}
+
+export function useCreateCargoPermissao() {
+  return useMutation({
+    mutationFn: (body: { nome: string; permissoes: Permissoes }) => api.post('/config/cargos-permissao', body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['config', 'cargos-permissao'] })
+      queryClient.invalidateQueries({ queryKey: ['config', 'contas'] })
+    },
+  })
+}
+
+export function useUpdateCargoPermissao() {
+  return useMutation({
+    mutationFn: ({ id, ...body }: { id: number; nome?: string; permissoes?: Permissoes }) => api.put(`/config/cargos-permissao/${id}`, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['config', 'cargos-permissao'] })
+      queryClient.invalidateQueries({ queryKey: ['config', 'contas'] })
+    },
+  })
+}
+
+export function useDeleteCargoPermissao() {
+  return useMutation({
+    mutationFn: (id: number) => api.delete(`/config/cargos-permissao/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['config', 'cargos-permissao'] })
+      queryClient.invalidateQueries({ queryKey: ['config', 'contas'] })
+    },
   })
 }
 

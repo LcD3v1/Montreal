@@ -47,14 +47,26 @@ const permissoesSchema = z.record(
 export const createContaSchema = z.object({
   username: z.string().min(2).max(64).regex(/^[\w.\-]+$/, 'Usuário contém caracteres inválidos'),
   password: z.string().min(4).max(128),
+  cargoPermissaoId: z.number().int().positive().optional(),
   permissoes: permissoesSchema.optional(),
 })
 
 export const updateContaSchema = z.object({
   username: z.string().min(2).max(64).regex(/^[\w.\-]+$/, 'Usuário contém caracteres inválidos').optional(),
+  cargoPermissaoId: z.number().int().positive().optional(),
   permissoes: permissoesSchema.optional(),
   ativo: z.boolean().optional(),
   password: z.string().min(4).max(128).optional(),
+}).refine(body => Object.keys(body).length > 0, { message: 'Nenhum campo fornecido' })
+
+export const createCargoPermissaoSchema = z.object({
+  nome: safeStr(1, 50),
+  permissoes: permissoesSchema,
+})
+
+export const updateCargoPermissaoSchema = z.object({
+  nome: safeStr(1, 50).optional(),
+  permissoes: permissoesSchema.optional(),
 }).refine(body => Object.keys(body).length > 0, { message: 'Nenhum campo fornecido' })
 
 export const membroSchema = z.object({

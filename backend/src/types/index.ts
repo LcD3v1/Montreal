@@ -5,6 +5,11 @@ export interface Permissao {
   editar: boolean
 }
 export type Permissoes = Record<string, Permissao>
+export interface CargoPermissao {
+  id: number
+  nome: string
+  permissoes: Permissoes
+}
 export type TipoAcao = 'tiro' | 'fuga'
 export type ResultadoTiro = 'Vitória' | 'Derrota' | 'Empate'
 export type ResultadoFuga = 'Sucesso' | 'Falha'
@@ -137,6 +142,7 @@ export interface Conta {
   username: string
   password: string
   ativo: boolean
+  cargoPermissaoId?: number
   permissoes: Permissoes
 }
 
@@ -178,6 +184,7 @@ export interface MontrealData {
   recCfg: RecCfg
   patentes: string[]
   cargos: string[]
+  cargosPermissao: CargoPermissao[]
   contas: Conta[]
   bauItens: string[]
   bauMovimentos: BauMovimento[]
@@ -192,6 +199,7 @@ export interface MontrealData {
   nextAcId: number
   nextRecId: number
   nextContaId: number
+  nextCargoPermissaoId: number
   nextBauMovId: number
   nextBauGerenciaMovId: number
   nextTabletMovId: number

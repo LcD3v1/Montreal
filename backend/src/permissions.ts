@@ -1,6 +1,5 @@
-import { Permissoes } from './types'
+import { CargoPermissao, Conta, Permissoes } from './types'
 
-// Áreas do sistema (correspondem aos itens da sidebar)
 export const AREA_IDS = [
   'dashboard',
   'comunicados',
@@ -36,7 +35,6 @@ export function emptyPermissoes(): Permissoes {
   return p
 }
 
-// Normaliza um objeto de permissões recebido (garante todas as áreas e booleanos)
 export function normalizePermissoes(input: unknown): Permissoes {
   const base = emptyPermissoes()
   if (input && typeof input === 'object') {
@@ -50,7 +48,6 @@ export function normalizePermissoes(input: unknown): Permissoes {
   return base
 }
 
-// Migração de contas antigas (nivel) para permissões por área
 export function permissoesFromNivel(nivel?: string): Permissoes {
   if (nivel === 'admin') return fullPermissoes()
   const p = emptyPermissoes()
@@ -58,7 +55,6 @@ export function permissoesFromNivel(nivel?: string): Permissoes {
     for (const a of AREA_IDS) if (a !== 'configuracoes') p[a].ver = true
     return p
   }
-  // moderador / membro / desconhecido → vê e edita tudo, menos Configurações
   for (const a of AREA_IDS) {
     if (a === 'configuracoes') continue
     p[a] = { ver: true, editar: nivel !== undefined }
@@ -66,8 +62,6 @@ export function permissoesFromNivel(nivel?: string): Permissoes {
   return p
 }
 
-// Garante que todas as áreas existam na conta. Áreas novas (ainda não presentes)
-// recebem acesso total se a conta for admin de Configurações; senão, ficam bloqueadas.
 export function ensureAllAreas(p: Permissoes | undefined, grantNew: boolean): Permissoes {
   const base = p ?? {}
   const out: Permissoes = {}
@@ -77,7 +71,25 @@ export function ensureAllAreas(p: Permissoes | undefined, grantNew: boolean): Pe
   return out
 }
 
-// Quantas contas ativas podem gerenciar Configurações (trava anti-lockout)
-export function countConfigAdmins(contas: { ativo: boolean; permissoes?: Permissoes }[]): number {
-  return contas.filter(c => c.ativo && c.permissoes?.configuracoes?.editar).length
+export function resolveContaPermissoes(
+  conta: Pick<Conta, 'cargoPermissaoId' | 'permissoes'>,
+  cargosPermissao: CargoPermissao[] = [],
+): Permissoes {
+  const cargo = conta.cargoPermissaoId
+    ? cargosPermissao.find(c => c.id === conta.cargoPermissaoId)
+    : undefined
+  if (cargo) {
+    return ensureAllAreas(cargo.permissoes, !!cargo.permissoes?.configuracoes?.editar)
+  }
+  return ensureAllAreas(conta.permissoes, !!conta.permissoes?.configuracoes?.editar)
+}
+
+export function countConfigAdmins(
+  contas: { ativo: boolean; cargoPermissaoId?: number; permissoes?: Permissoes }[],
+  cargosPermissao: CargoPermissao[] = [],
+): number {
+  return contas.filter(c => c.ativo && resolveContaPermissoes({
+    cargoPermissaoId: c.cargoPermissaoId,
+    permissoes: c.permissoes ?? emptyPermissoes(),
+  }, cargosPermissao).configuracoes?.editar).length
 }

@@ -5,6 +5,11 @@ export interface Permissao {
   editar: boolean
 }
 export type Permissoes = Record<string, Permissao>
+export interface CargoPermissao {
+  id: number
+  nome: string
+  permissoes: Permissoes
+}
 export type TipoAcao = 'tiro' | 'fuga'
 export type ResultadoTiro = 'Vitória' | 'Derrota'
 export type ResultadoFuga = 'Sucesso' | 'Falha'
@@ -176,6 +181,8 @@ export interface Conta {
   id: number
   username: string
   ativo: boolean
+  cargoPermissaoId?: number
+  cargoPermissaoNome?: string
   permissoes: Permissoes
 }
 
@@ -212,6 +219,7 @@ export interface Recruta {
 export interface AuthUser {
   contaId: number
   username: string
+  cargoPermissaoId?: number
   permissoes: Permissoes
 }
 

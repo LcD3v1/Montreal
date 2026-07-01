@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Image, List, Radio, Users,
-  Plus, Trash2, Archive, KeyRound, Crown, Percent, Check, X,
+  Plus, Trash2, Archive, KeyRound, Crown, Percent, Check, X, ShieldCheck,
 } from 'lucide-react'
 import {
   useQrus, useAddQru, useDeleteQru,
@@ -9,6 +9,7 @@ import {
   useBauItens, useAddBauItem, useDeleteBauItem,
   useBauGerenciaItens, useAddBauGerenciaItem, useDeleteBauGerenciaItem,
   useLavagemPorcentagens, useAddLavagemPorcentagem, useUpdateLavagemPorcentagem, useDeleteLavagemPorcentagem,
+  useCargosPermissao, useCreateCargoPermissao, useUpdateCargoPermissao, useDeleteCargoPermissao,
   useLogo,
 } from '@/hooks/useConfig'
 import { useContas, useCreateConta, useUpdateConta, useDeleteConta } from '@/hooks/useContas'
@@ -19,7 +20,7 @@ import GlowCard from '@/components/ui/GlowCard'
 import HudButton from '@/components/ui/HudButton'
 import ModalOverlay from '@/components/ui/ModalOverlay'
 import LogoUploader from '@/components/ui/LogoUploader'
-import type { Conta, Permissoes, LavagemPorcentagem } from '@/types'
+import type { Conta, Permissoes, LavagemPorcentagem, CargoPermissao } from '@/types'
 
 const TABS = [
   { id: 'logo',         label: 'Logo',              icon: Image },
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'bau',          label: 'Itens do Baú',      icon: Archive },
   { id: 'bauGerencia',  label: 'Itens Baú Gerência', icon: Crown },
   { id: 'porcentagens', label: 'Porcentagens',      icon: Percent },
+  { id: 'cargosPermissao', label: 'Cargos de Permissao', icon: ShieldCheck },
   { id: 'contas',       label: 'Contas',            icon: Users },
 ] as const
 
@@ -195,6 +197,112 @@ function PermissoesEditor({ value, onChange, disabled }: {
   )
 }
 
+function CargosPermissaoEditor({
+  items, canEdit, onAdd, onUpdate, onDelete,
+}: {
+  items: CargoPermissao[]
+  canEdit: boolean
+  onAdd: (nome: string, permissoes: Permissoes) => void
+  onUpdate: (id: number, nome: string, permissoes: Permissoes) => void
+  onDelete: (id: number) => void
+}) {
+  const [nome, setNome] = useState('')
+  const [permissoes, setPermissoes] = useState<Permissoes>(emptyPermissoes())
+  const [editId, setEditId] = useState<number | null>(null)
+  const [editNome, setEditNome] = useState('')
+  const [editPermissoes, setEditPermissoes] = useState<Permissoes>(emptyPermissoes())
+
+  function resetCreate() {
+    setNome('')
+    setPermissoes(emptyPermissoes())
+  }
+
+  function startEdit(cargo: CargoPermissao) {
+    setEditId(cargo.id)
+    setEditNome(cargo.nome)
+    setEditPermissoes({ ...emptyPermissoes(), ...cargo.permissoes })
+  }
+
+  return (
+    <div className="space-y-4">
+      {canEdit && (
+        <div className="border border-bdr rounded p-4 bg-card2/40 space-y-3">
+          <div className="flex gap-2">
+            <input
+              value={nome}
+              onChange={e => setNome(e.target.value)}
+              placeholder="Nome do cargo..."
+              className="input-gold flex-1 bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt"
+            />
+            <HudButton
+              size="sm"
+              onClick={() => {
+                if (!nome.trim()) return
+                onAdd(nome.trim(), permissoes)
+                resetCreate()
+              }}
+            >
+              <Plus size={14} className="inline mr-1.5" /> Criar
+            </HudButton>
+          </div>
+          <PermissoesEditor value={permissoes} onChange={setPermissoes} />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {items.map(cargo => (
+          <div key={cargo.id} className="border border-bdr rounded bg-card2 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-bdr">
+              {editId === cargo.id ? (
+                <input
+                  value={editNome}
+                  onChange={e => setEditNome(e.target.value)}
+                  className="input-gold flex-1 bg-bg border border-bdr2 rounded px-2 py-1 text-xs font-mono text-txt"
+                />
+              ) : (
+                <span className="font-mono text-xs text-txt">{cargo.nome}</span>
+              )}
+              {canEdit && (
+                <div className="flex items-center gap-2">
+                  {editId === cargo.id ? (
+                    <>
+                      <button onClick={() => { onUpdate(cargo.id, editNome.trim(), editPermissoes); setEditId(null) }} className="text-green hover:text-green/80">
+                        <Check size={14} />
+                      </button>
+                      <button onClick={() => setEditId(null)} className="text-txt3 hover:text-red">
+                        <X size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => startEdit(cargo)} className="text-txt3 hover:text-gold">
+                        <KeyRound size={14} />
+                      </button>
+                      <button onClick={() => onDelete(cargo.id)} className="text-txt3 hover:text-red">
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="p-3">
+              <PermissoesEditor
+                value={editId === cargo.id ? editPermissoes : cargo.permissoes}
+                onChange={setEditPermissoes}
+                disabled={!canEdit || editId !== cargo.id}
+              />
+            </div>
+          </div>
+        ))}
+        {items.length === 0 && (
+          <p className="font-mono text-xs text-txt3 text-center py-4">Nenhum cargo de permissao cadastrado</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function ConfiguracoesPage() {
   const { user } = useAuthStore()
   const { addToast } = useUIStore()
@@ -223,6 +331,11 @@ export default function ConfiguracoesPage() {
   const updatePorcentagem = useUpdateLavagemPorcentagem()
   const deletePorcentagem = useDeleteLavagemPorcentagem()
 
+  const { data: cargosPermissao = [] } = useCargosPermissao()
+  const createCargoPermissao = useCreateCargoPermissao()
+  const updateCargoPermissao = useUpdateCargoPermissao()
+  const deleteCargoPermissao = useDeleteCargoPermissao()
+
   const { data: logoData } = useLogo()
 
   const { data: contas = [] } = useContas()
@@ -233,26 +346,27 @@ export default function ConfiguracoesPage() {
   // Nova conta
   const [novaContaModal, setNovaContaModal] = useState(false)
   const [form, setForm] = useState({ username: '', password: '' })
-  const [novaPerm, setNovaPerm] = useState<Permissoes>(emptyPermissoes())
+  const [novaCargoId, setNovaCargoId] = useState<number | ''>('')
 
   // Editar conta existente (usuário, senha, permissões)
   const [editConta, setEditConta] = useState<Conta | null>(null)
-  const [editPerm, setEditPerm] = useState<Permissoes>(emptyPermissoes())
+  const [editCargoId, setEditCargoId] = useState<number | ''>('')
   const [editUsername, setEditUsername] = useState('')
   const [editPassword, setEditPassword] = useState('')
 
   function abrirEdit(conta: Conta) {
     setEditConta(conta)
-    setEditPerm({ ...emptyPermissoes(), ...conta.permissoes })
+    setEditCargoId(conta.cargoPermissaoId ?? '')
     setEditUsername(conta.username)
     setEditPassword('')
   }
 
   function salvarEdicao() {
     if (!editConta) return
-    const body: { id: number; username?: string; password?: string; permissoes: Permissoes } = {
+    if (!editCargoId) { addToast('error', 'Selecione um cargo de permissao.'); return }
+    const body: { id: number; username?: string; password?: string; cargoPermissaoId: number } = {
       id: editConta.id,
-      permissoes: editPerm,
+      cargoPermissaoId: Number(editCargoId),
     }
     if (editUsername.trim() && editUsername.trim() !== editConta.username) body.username = editUsername.trim()
     if (editPassword.trim()) body.password = editPassword.trim()
@@ -342,12 +456,29 @@ export default function ConfiguracoesPage() {
             </div>
           )}
 
+          {activeTab === 'cargosPermissao' && (
+            <div>
+              <h3 className="font-orbitron text-xs text-gold tracking-wider mb-4">CARGOS DE PERMISSAO</h3>
+              <CargosPermissaoEditor
+                items={cargosPermissao}
+                canEdit={canEditConfig}
+                onAdd={(nome, permissoes) => createCargoPermissao.mutate({ nome, permissoes }, { onError: e => onError(e, 'Erro ao criar cargo.') })}
+                onUpdate={(id, nome, permissoes) => updateCargoPermissao.mutate({ id, nome, permissoes }, { onError: e => onError(e, 'Erro ao salvar cargo.') })}
+                onDelete={id => {
+                  if (confirm('Excluir este cargo de permissao?')) {
+                    deleteCargoPermissao.mutate(id, { onError: e => onError(e, 'Erro ao excluir cargo.') })
+                  }
+                }}
+              />
+            </div>
+          )}
+
           {activeTab === 'contas' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-orbitron text-xs text-gold tracking-wider">CONTAS DE ACESSO</h3>
                 {canEditConfig && (
-                  <HudButton size="sm" onClick={() => { setForm({ username: '', password: '' }); setNovaPerm(emptyPermissoes()); setNovaContaModal(true) }}>
+                  <HudButton size="sm" onClick={() => { setForm({ username: '', password: '' }); setNovaCargoId(cargosPermissao[0]?.id ?? ''); setNovaContaModal(true) }}>
                     <Plus size={14} className="inline mr-1.5" /> Nova Conta
                   </HudButton>
                 )}
@@ -355,7 +486,7 @@ export default function ConfiguracoesPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-bdr">
-                    {['Usuário', 'Status', 'Ações'].map(h => (
+                    {['Usuario', 'Cargo', 'Status', 'Acoes'].map(h => (
                       <th key={h} className="text-left font-mono text-xs text-txt3 px-3 py-2">{h}</th>
                     ))}
                   </tr>
@@ -364,6 +495,7 @@ export default function ConfiguracoesPage() {
                   {contas.map(conta => (
                     <tr key={conta.id} className="border-b border-bdr/50 hover:bg-bdr/30 transition-colors">
                       <td className="px-3 py-2.5 font-mono text-xs text-txt">{conta.username}</td>
+                      <td className="px-3 py-2.5 font-mono text-xs text-txt2">{conta.cargoPermissaoNome ?? '-'}</td>
                       <td className="px-3 py-2.5">
                         <button
                           disabled={!canEditConfig}
@@ -419,14 +551,24 @@ export default function ConfiguracoesPage() {
           </div>
           <div>
             <label className="font-mono text-xs text-txt2 block mb-2">PERMISSÕES</label>
-            <PermissoesEditor value={novaPerm} onChange={setNovaPerm} />
+            <select
+              value={novaCargoId}
+              onChange={e => setNovaCargoId(e.target.value ? Number(e.target.value) : '')}
+              className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt"
+            >
+              <option value="">Selecione...</option>
+              {cargosPermissao.map(cargo => (
+                <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-3 pt-2">
             <HudButton
               loading={createConta.isPending}
               onClick={() => {
                 if (!form.username || !form.password) { addToast('error', 'Preencha usuário e senha.'); return }
-                createConta.mutate({ username: form.username, password: form.password, permissoes: novaPerm }, {
+                if (!novaCargoId) { addToast('error', 'Selecione um cargo de permissao.'); return }
+                createConta.mutate({ username: form.username, password: form.password, cargoPermissaoId: Number(novaCargoId) }, {
                   onSuccess: () => { addToast('success', 'Conta criada!'); setNovaContaModal(false) },
                   onError: e => onError(e, 'Erro ao criar conta.'),
                 })
@@ -458,7 +600,16 @@ export default function ConfiguracoesPage() {
           </div>
           <div>
             <label className="font-mono text-xs text-txt2 block mb-2">PERMISSÕES</label>
-            <PermissoesEditor value={editPerm} onChange={setEditPerm} />
+            <select
+              value={editCargoId}
+              onChange={e => setEditCargoId(e.target.value ? Number(e.target.value) : '')}
+              className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt"
+            >
+              <option value="">Selecione...</option>
+              {cargosPermissao.map(cargo => (
+                <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-3 pt-2">
             <HudButton loading={updateConta.isPending} onClick={salvarEdicao} className="flex-1">

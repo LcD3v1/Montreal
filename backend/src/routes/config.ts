@@ -7,19 +7,32 @@ import {
   validateBody,
   qruSchema, patenteSchema, cargoSchema,
   createContaSchema, updateContaSchema,
+  createCargoPermissaoSchema, updateCargoPermissaoSchema,
   logoSchema, recCfgSchema,
   reorderPatenteSchema, bauItemSchema, lavagemPorcentagemSchema,
 } from '../middleware/validate'
 import { audit, readAuditLog } from '../security/audit'
 import { readData, writeData } from '../data'
-import { normalizePermissoes, countConfigAdmins } from '../permissions'
-import { Conta, MontrealData } from '../types'
+import { normalizePermissoes, countConfigAdmins, resolveContaPermissoes } from '../permissions'
+import { CargoPermissao, Conta, MontrealData } from '../types'
 
 const router = Router()
 
 // Atalho: edição de Configurações
 const canEditConfig = requireEdit('configuracoes')
 const canViewConfig = requireView('configuracoes')
+
+function serializeConta(conta: Conta, cargosPermissao: CargoPermissao[]) {
+  const { password: _p, ...rest } = conta
+  const cargo = conta.cargoPermissaoId
+    ? cargosPermissao.find(c => c.id === conta.cargoPermissaoId)
+    : undefined
+  return {
+    ...rest,
+    cargoPermissaoNome: cargo?.nome,
+    permissoes: resolveContaPermissoes(conta, cargosPermissao),
+  }
+}
 
 // ── QRUs ──────────────────────────────────────────────────────────────────────
 
@@ -180,13 +193,84 @@ router.delete('/lavagem-porcentagens/:id', requireAuth, canEditConfig, (req: Req
 
 // ── Contas ────────────────────────────────────────────────────────────────────
 
+router.get('/cargos-permissao', requireAuth, canViewConfig, (_req, res) => {
+  res.json(readData().cargosPermissao)
+})
+
+router.post('/cargos-permissao', requireAuth, canEditConfig, validateBody(createCargoPermissaoSchema), (req: Request, res: Response): void => {
+  const { nome, permissoes } = req.body as { nome: string; permissoes: unknown }
+  const data = readData()
+  if (data.cargosPermissao.some(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+    res.status(409).json({ error: 'Cargo de permissao ja existe' }); return
+  }
+  const novo: CargoPermissao = {
+    id: data.nextCargoPermissaoId,
+    nome,
+    permissoes: normalizePermissoes(permissoes),
+  }
+  data.cargosPermissao.push(novo)
+  data.nextCargoPermissaoId++
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Cargo de permissao criado: ${nome}`)
+  res.status(201).json(novo)
+})
+
+router.put('/cargos-permissao/:id', requireAuth, canEditConfig, validateBody(updateCargoPermissaoSchema), (req: Request, res: Response): void => {
+  const id = parseInt(String(req.params.id), 10)
+  if (isNaN(id)) { res.status(400).json({ error: 'ID invalido' }); return }
+
+  const { nome, permissoes } = req.body as { nome?: string; permissoes?: unknown }
+  const data = readData()
+  const cargo = data.cargosPermissao.find(c => c.id === id)
+  if (!cargo) { res.status(404).json({ error: 'Cargo de permissao nao encontrado' }); return }
+
+  const nomeAnterior = cargo.nome
+  const permissoesAnteriores = cargo.permissoes
+  if (nome && nome !== cargo.nome) {
+    if (data.cargosPermissao.some(c => c.id !== id && c.nome.toLowerCase() === nome.toLowerCase())) {
+      res.status(409).json({ error: 'Cargo de permissao ja existe' }); return
+    }
+    cargo.nome = nome
+  }
+  if (permissoes !== undefined) cargo.permissoes = normalizePermissoes(permissoes)
+
+  if (countConfigAdmins(data.contas, data.cargosPermissao) < 1) {
+    cargo.nome = nomeAnterior
+    cargo.permissoes = permissoesAnteriores
+    audit('PRIVILEGE_ESCALATION_ATTEMPT', req, `Bloqueado: cargo ${id} deixaria o sistema sem admin de Configuracoes`)
+    res.status(400).json({ error: 'Operacao bloqueada: precisa existir ao menos uma conta ativa com permissao de editar Configuracoes.' })
+    return
+  }
+
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Cargo de permissao atualizado: ${cargo.nome}`)
+  res.json(cargo)
+})
+
+router.delete('/cargos-permissao/:id', requireAuth, canEditConfig, (req: Request, res: Response): void => {
+  const id = parseInt(String(req.params.id), 10)
+  if (isNaN(id)) { res.status(400).json({ error: 'ID invalido' }); return }
+
+  const data = readData()
+  if (data.contas.some(c => c.cargoPermissaoId === id)) {
+    res.status(400).json({ error: 'Nao e possivel excluir um cargo vinculado a contas.' })
+    return
+  }
+  const before = data.cargosPermissao.length
+  data.cargosPermissao = data.cargosPermissao.filter(c => c.id !== id)
+  if (data.cargosPermissao.length === before) { res.status(404).json({ error: 'Cargo de permissao nao encontrado' }); return }
+  writeData(data)
+  audit('CONFIG_UPDATED', req, `Cargo de permissao removido: ${id}`)
+  res.json({ ok: true })
+})
+
 router.get('/contas', requireAuth, canViewConfig, (_req, res) => {
   const data = readData()
-  res.json(data.contas.map(({ password: _p, ...rest }) => rest))
+  res.json(data.contas.map(conta => serializeConta(conta, data.cargosPermissao)))
 })
 
 router.post('/contas', requireAuth, canEditConfig, validateBody(createContaSchema), async (req: Request, res: Response): Promise<void> => {
-  const { username, password, permissoes } = req.body as { username: string; password: string; permissoes?: unknown }
+  const { username, password, cargoPermissaoId, permissoes } = req.body as { username: string; password: string; cargoPermissaoId?: number; permissoes?: unknown }
   // Hash ANTES de ler os dados — evita janela de corrida (read-modify-write) com o await
   const hashed = await bcrypt.hash(password, 12)
   const data = readData()
@@ -195,12 +279,19 @@ router.post('/contas', requireAuth, canEditConfig, validateBody(createContaSchem
     res.status(409).json({ error: 'Nome de usuário já existe' }); return
   }
 
+  const cargoId = cargoPermissaoId ?? data.cargosPermissao[0]?.id
+  const cargo = data.cargosPermissao.find(c => c.id === cargoId)
+  if (!cargo) {
+    res.status(400).json({ error: 'Selecione um cargo de permissao valido.' }); return
+  }
+
   const novaConta: Conta = {
     id: data.nextContaId,
     username: username.trim(),
     password: hashed,
     ativo: true,
-    permissoes: normalizePermissoes(permissoes),
+    cargoPermissaoId: cargoId,
+    permissoes: permissoes !== undefined ? normalizePermissoes(permissoes) : cargo.permissoes,
   }
 
   data.contas.push(novaConta)
@@ -208,15 +299,14 @@ router.post('/contas', requireAuth, canEditConfig, validateBody(createContaSchem
   writeData(data)
 
   audit('ACCOUNT_CREATED', req, `Usuário: ${novaConta.username}`)
-  const { password: _p, ...semSenha } = novaConta
-  res.status(201).json(semSenha)
+  res.status(201).json(serializeConta(novaConta, data.cargosPermissao))
 })
 
 router.put('/contas/:id', requireAuth, canEditConfig, validateBody(updateContaSchema), async (req: Request, res: Response): Promise<void> => {
   const id = parseInt(String(req.params.id), 10)
   if (isNaN(id)) { res.status(400).json({ error: 'ID inválido' }); return }
 
-  const { username, permissoes, ativo, password } = req.body as { username?: string; permissoes?: unknown; ativo?: boolean; password?: string }
+  const { username, cargoPermissaoId, permissoes, ativo, password } = req.body as { username?: string; cargoPermissaoId?: number; permissoes?: unknown; ativo?: boolean; password?: string }
   // Hash ANTES de ler os dados — evita janela de corrida com o await
   const novoHash = password ? await bcrypt.hash(password, 12) : undefined
 
@@ -238,6 +328,13 @@ router.put('/contas/:id', requireAuth, canEditConfig, validateBody(updateContaSc
     conta.permissoes = normalizePermissoes(permissoes)
     changes.push('permissões atualizadas')
   }
+  if (cargoPermissaoId !== undefined) {
+    const cargo = data.cargosPermissao.find(c => c.id === cargoPermissaoId)
+    if (!cargo) { res.status(400).json({ error: 'Cargo de permissao invalido.' }); return }
+    conta.cargoPermissaoId = cargoPermissaoId
+    conta.permissoes = cargo.permissoes
+    changes.push(`cargo: ${cargo.nome}`)
+  }
   if (typeof ativo === 'boolean') {
     conta.ativo = ativo
     changes.push(`ativo: ${ativo}`)
@@ -248,7 +345,7 @@ router.put('/contas/:id', requireAuth, canEditConfig, validateBody(updateContaSc
   }
 
   // Trava anti-lockout: nunca deixar o sistema sem ninguém que gerencie Configurações
-  if (countConfigAdmins(data.contas) < 1) {
+  if (countConfigAdmins(data.contas, data.cargosPermissao) < 1) {
     audit('PRIVILEGE_ESCALATION_ATTEMPT', req, `Bloqueado: deixaria o sistema sem admin de Configurações (conta ${id})`)
     res.status(400).json({ error: 'Operação bloqueada: precisa existir ao menos uma conta ativa com permissão de editar Configurações.' })
     return
@@ -256,8 +353,7 @@ router.put('/contas/:id', requireAuth, canEditConfig, validateBody(updateContaSc
 
   writeData(data)
   audit('ACCOUNT_UPDATED', req, `ID: ${id} | ${changes.join(', ')}`)
-  const { password: _p, ...semSenha } = conta
-  res.json(semSenha)
+  res.json(serializeConta(conta, data.cargosPermissao))
 })
 
 router.delete('/contas/:id', requireAuth, canEditConfig, (req: Request, res: Response): void => {
@@ -274,7 +370,7 @@ router.delete('/contas/:id', requireAuth, canEditConfig, (req: Request, res: Res
 
   const [removida] = data.contas.splice(idx, 1)
 
-  if (countConfigAdmins(data.contas) < 1) {
+  if (countConfigAdmins(data.contas, data.cargosPermissao) < 1) {
     res.status(400).json({ error: 'Operação bloqueada: precisa existir ao menos uma conta ativa com permissão de editar Configurações.' })
     return
   }
