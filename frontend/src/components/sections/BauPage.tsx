@@ -13,7 +13,13 @@ import type { Membro, TipoMovimentoBau } from '@/types'
 
 interface LinhaItem { item: string; quantidade: number | '' }
 
+const MAX_QUANTIDADE_BAU = 1_000_000_000
 const linhaVazia = (): LinhaItem => ({ item: '', quantidade: '' })
+const quantidadeValida = (quantidade: number | '') =>
+  typeof quantidade === 'number'
+  && Number.isInteger(quantidade)
+  && quantidade >= 1
+  && quantidade <= MAX_QUANTIDADE_BAU
 
 export default function BauPage() {
   const { addToast } = useUIStore()
@@ -41,8 +47,10 @@ export default function BauPage() {
     e.preventDefault()
     if (!membroId) { addToast('error', 'Selecione um membro.'); return }
     const itensLimpos = linhas
-      .filter(l => l.item && l.quantidade && Number(l.quantidade) >= 1)
+      .filter(l => l.item && quantidadeValida(l.quantidade))
       .map(l => ({ item: l.item, quantidade: Number(l.quantidade) }))
+    const temQuantidadeInvalida = linhas.some(l => l.item && l.quantidade !== '' && !quantidadeValida(l.quantidade))
+    if (temQuantidadeInvalida) { addToast('error', `Informe uma quantidade inteira entre 1 e ${MAX_QUANTIDADE_BAU}.`); return }
     if (itensLimpos.length === 0) { addToast('error', 'Adicione ao menos um item com quantidade.'); return }
 
     try {
@@ -113,7 +121,7 @@ export default function BauPage() {
                       <option value="">Selecione o item...</option>
                       {(itens ?? []).map(i => <option key={i} value={i}>{i}</option>)}
                     </select>
-                    <input type="number" min={1} value={l.quantidade}
+                    <input type="number" min={1} max={MAX_QUANTIDADE_BAU} step={1} value={l.quantidade}
                       onChange={e => updateLinha(idx, 'quantidade', e.target.value)}
                       placeholder="Qtd"
                       className="input-gold w-24 bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt placeholder-txt3" />

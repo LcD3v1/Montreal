@@ -27,6 +27,8 @@ const safeStr = (min: number, max: number) =>
 const safeStrOpt = (max: number) =>
   z.string().max(max).transform((s: string) => s.trim())
 
+const MAX_QUANTIDADE_BAU = 1_000_000_000
+
 export const loginSchema = z.object({
   username: z.string().min(1).max(64).regex(/^[\w.\-@]+$/, 'Usuário contém caracteres inválidos'),
   password: z.string().min(1).max(128),
@@ -171,7 +173,7 @@ export const bauMovimentoSchema = z.object({
   tipo:        z.enum(['entrada', 'saida']),
   membroId:    z.number().int().positive(),
   item:        safeStr(1, 50),
-  quantidade:  z.number().int().positive().max(1_000_000),
+  quantidade:  z.number().int().positive().max(MAX_QUANTIDADE_BAU),
   observacoes: safeStrOpt(300).default(''),
 })
 
@@ -183,7 +185,7 @@ export const bauLoteSchema = z.object({
   observacoes: safeStrOpt(300).default(''),
   itens: z.array(z.object({
     item:       safeStr(1, 50),
-    quantidade: z.number().int().positive().max(1_000_000),
+    quantidade: z.number().int().positive().max(MAX_QUANTIDADE_BAU),
   })).min(1, 'Adicione ao menos um item').max(50),
 })
 
