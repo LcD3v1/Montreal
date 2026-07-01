@@ -141,12 +141,14 @@ export const lavagemSchema = z.object({
   dinheiroLimpo:   z.number().min(0).max(1_000_000_000),
   porcentagem:     z.number().min(0).max(100).optional(),
   porcentagemNome: safeStrOpt(60).optional(),
+  lucroFamiliaPorcentagem: z.number().min(0).max(100).optional(),
   observacoes:     safeStrOpt(300).default(''),
 })
 
 export const lavagemPorcentagemSchema = z.object({
-  nome:  safeStr(1, 60),
-  valor: z.number().min(0).max(100),
+  nome:                    safeStr(1, 60),
+  valor:                   z.number().min(0).max(100),
+  lucroFamiliaPorcentagem: z.number().min(0).max(100).optional(),
 })
 
 export const tabletMovimentoSchema = z.object({

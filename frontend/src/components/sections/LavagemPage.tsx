@@ -25,6 +25,7 @@ export default function LavagemPage() {
   const [observacoes, setObservacoes] = useState('')
 
   const porcSel = (porcentagens ?? []).find(p => p.id === porcId)
+  const lucroFamiliaPorcentagem = porcSel?.lucroFamiliaPorcentagem ?? 100
 
   // Recalcula o limpo a partir do sujo + porcentagem selecionada
   function recalcLimpo(novoSujo: number | '', valorPct?: number) {
@@ -58,6 +59,7 @@ export default function LavagemPage() {
         dinheiroLimpo: Number(limpo),
         porcentagem: porcSel?.valor,
         porcentagemNome: porcSel?.nome,
+        lucroFamiliaPorcentagem: porcSel ? lucroFamiliaPorcentagem : undefined,
         observacoes: observacoes.trim(),
       })
       addToast('success', 'Lavagem registrada!')
@@ -68,6 +70,7 @@ export default function LavagemPage() {
   }
 
   const taxa = sujo !== '' && limpo !== '' ? Number(sujo) - Number(limpo) : null
+  const lucro = taxa !== null ? Math.round(taxa * (lucroFamiliaPorcentagem / 100)) : null
 
   if (!podeLavar) {
     return (
@@ -100,7 +103,7 @@ export default function LavagemPage() {
                 className="input-gold w-full bg-card2 border border-bdr2 rounded px-3 py-2.5 text-sm font-mono text-txt">
                 <option value="">Sem porcentagem (manual)</option>
                 {(porcentagens ?? []).map(p => (
-                  <option key={p.id} value={p.id}>{p.nome} — {p.valor}%</option>
+                  <option key={p.id} value={p.id}>{p.nome} - {p.valor}% / lucro {p.lucroFamiliaPorcentagem ?? 100}%</option>
                 ))}
               </select>
               {(porcentagens ?? []).length === 0 && (
@@ -123,9 +126,9 @@ export default function LavagemPage() {
               </div>
             </div>
 
-            {taxa !== null && (
+            {lucro !== null && (
               <p className="font-mono text-xs text-txt3">
-                Diferença (taxa): <span className="text-gold">{fmtMoney(taxa)}</span>
+                Lucro{porcSel ? ` (${lucroFamiliaPorcentagem}%)` : ''}: <span className="text-gold">{fmtMoney(lucro)}</span>
               </p>
             )}
 

@@ -124,14 +124,14 @@ export function useLavagemPorcentagens() {
 
 export function useAddLavagemPorcentagem() {
   return useMutation({
-    mutationFn: (body: { nome: string; valor: number }) => api.post('/config/lavagem-porcentagens', body),
+    mutationFn: (body: { nome: string; valor: number; lucroFamiliaPorcentagem?: number }) => api.post('/config/lavagem-porcentagens', body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'lavagem-porcentagens'] }),
   })
 }
 
 export function useUpdateLavagemPorcentagem() {
   return useMutation({
-    mutationFn: ({ id, ...body }: { id: number; nome: string; valor: number }) => api.put(`/config/lavagem-porcentagens/${id}`, body),
+    mutationFn: ({ id, ...body }: { id: number; nome: string; valor: number; lucroFamiliaPorcentagem?: number }) => api.put(`/config/lavagem-porcentagens/${id}`, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['config', 'lavagem-porcentagens'] }),
   })
 }

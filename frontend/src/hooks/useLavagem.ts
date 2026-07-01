@@ -18,7 +18,10 @@ export function useLavagens(filters: LavagemFilter = {}) {
 
 export function useCreateLavagem() {
   return useMutation({
-    mutationFn: (body: { data: string; familia: string; dinheiroSujo: number; dinheiroLimpo: number; porcentagem?: number; porcentagemNome?: string; observacoes?: string }) =>
+    mutationFn: (body: {
+      data: string; familia: string; dinheiroSujo: number; dinheiroLimpo: number
+      porcentagem?: number; porcentagemNome?: string; lucroFamiliaPorcentagem?: number; observacoes?: string
+    }) =>
       api.post<LavagemRegistro>('/lavagem', body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lavagem'] }),
   })

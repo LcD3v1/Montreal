@@ -77,28 +77,30 @@ function PorcentagensEditor({
   items, onAdd, onUpdate, onDelete, canEdit,
 }: {
   items: LavagemPorcentagem[]
-  onAdd: (nome: string, valor: number) => void
-  onUpdate: (id: number, nome: string, valor: number) => void
+  onAdd: (nome: string, valor: number, lucroFamiliaPorcentagem: number) => void
+  onUpdate: (id: number, nome: string, valor: number, lucroFamiliaPorcentagem: number) => void
   onDelete: (id: number) => void
   canEdit: boolean
 }) {
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState<number | ''>('')
+  const [lucroFamiliaPorcentagem, setLucroFamiliaPorcentagem] = useState<number | ''>('')
   const [editId, setEditId] = useState<number | null>(null)
   const [editNome, setEditNome] = useState('')
   const [editValor, setEditValor] = useState<number | ''>('')
+  const [editLucroFamiliaPorcentagem, setEditLucroFamiliaPorcentagem] = useState<number | ''>('')
 
   function add() {
-    if (!nome.trim() || valor === '' || Number(valor) < 0) return
-    onAdd(nome.trim(), Number(valor))
-    setNome(''); setValor('')
+    if (!nome.trim() || valor === '' || Number(valor) < 0 || lucroFamiliaPorcentagem === '' || Number(lucroFamiliaPorcentagem) < 0) return
+    onAdd(nome.trim(), Number(valor), Number(lucroFamiliaPorcentagem))
+    setNome(''); setValor(''); setLucroFamiliaPorcentagem('')
   }
   function startEdit(p: LavagemPorcentagem) {
-    setEditId(p.id); setEditNome(p.nome); setEditValor(p.valor)
+    setEditId(p.id); setEditNome(p.nome); setEditValor(p.valor); setEditLucroFamiliaPorcentagem(p.lucroFamiliaPorcentagem ?? 100)
   }
   function saveEdit() {
-    if (editId == null || !editNome.trim() || editValor === '' || Number(editValor) < 0) return
-    onUpdate(editId, editNome.trim(), Number(editValor))
+    if (editId == null || !editNome.trim() || editValor === '' || Number(editValor) < 0 || editLucroFamiliaPorcentagem === '' || Number(editLucroFamiliaPorcentagem) < 0) return
+    onUpdate(editId, editNome.trim(), Number(editValor), Number(editLucroFamiliaPorcentagem))
     setEditId(null)
   }
 
@@ -110,6 +112,9 @@ function PorcentagensEditor({
             className="input-gold flex-1 bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt" />
           <input type="number" min={0} max={100} value={valor}
             onChange={e => setValor(e.target.value ? Number(e.target.value) : '')} placeholder="%"
+            className="input-gold w-24 bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt" />
+          <input type="number" min={0} max={100} value={lucroFamiliaPorcentagem}
+            onChange={e => setLucroFamiliaPorcentagem(e.target.value ? Number(e.target.value) : '')} placeholder="% lucro"
             className="input-gold w-24 bg-card2 border border-bdr2 rounded px-3 py-2 text-sm font-mono text-txt" />
           <HudButton size="sm" onClick={add}><Plus size={14} /></HudButton>
         </div>
@@ -124,6 +129,9 @@ function PorcentagensEditor({
                 <input type="number" min={0} max={100} value={editValor}
                   onChange={e => setEditValor(e.target.value ? Number(e.target.value) : '')}
                   className="input-gold w-20 bg-bg border border-bdr2 rounded px-2 py-1 text-xs font-mono text-txt" />
+                <input type="number" min={0} max={100} value={editLucroFamiliaPorcentagem}
+                  onChange={e => setEditLucroFamiliaPorcentagem(e.target.value ? Number(e.target.value) : '')}
+                  className="input-gold w-20 bg-bg border border-bdr2 rounded px-2 py-1 text-xs font-mono text-txt" />
                 <button onClick={saveEdit} className="text-green hover:text-green/80"><Check size={14} /></button>
                 <button onClick={() => setEditId(null)} className="text-txt3 hover:text-red"><X size={14} /></button>
               </>
@@ -131,6 +139,7 @@ function PorcentagensEditor({
               <>
                 <span className="font-mono text-xs text-txt flex-1">{p.nome}</span>
                 <span className="font-mono text-xs text-gold">{p.valor}%</span>
+                <span className="font-mono text-xs text-green">Lucro {p.lucroFamiliaPorcentagem ?? 100}%</span>
                 {canEdit && (
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
                     <button onClick={() => startEdit(p)} className="text-txt3 hover:text-gold"><KeyRound size={12} /></button>
@@ -325,8 +334,8 @@ export default function ConfiguracoesPage() {
               <h3 className="font-orbitron text-xs text-gold tracking-wider mb-4">PORCENTAGENS DE LAVAGEM</h3>
               <PorcentagensEditor
                 items={porcentagens}
-                onAdd={(nome, valor) => addPorcentagem.mutate({ nome, valor }, { onError: e => onError(e, 'Erro ao adicionar.') })}
-                onUpdate={(id, nome, valor) => updatePorcentagem.mutate({ id, nome, valor }, { onError: e => onError(e, 'Erro ao salvar.') })}
+                onAdd={(nome, valor, lucroFamiliaPorcentagem) => addPorcentagem.mutate({ nome, valor, lucroFamiliaPorcentagem }, { onError: e => onError(e, 'Erro ao adicionar.') })}
+                onUpdate={(id, nome, valor, lucroFamiliaPorcentagem) => updatePorcentagem.mutate({ id, nome, valor, lucroFamiliaPorcentagem }, { onError: e => onError(e, 'Erro ao salvar.') })}
                 onDelete={id => deletePorcentagem.mutate(id, { onError: e => onError(e, 'Erro ao remover.') })}
                 canEdit={canEditConfig}
               />

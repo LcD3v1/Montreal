@@ -147,25 +147,25 @@ router.delete('/bau-gerencia-itens/:nome', requireAuth, canEditConfig, (req: Req
 router.get('/lavagem-porcentagens', requireAuth, (_req, res) => res.json(readData().lavagemPorcentagens))
 
 router.post('/lavagem-porcentagens', requireAuth, canEditConfig, validateBody(lavagemPorcentagemSchema), (req: Request, res: Response): void => {
-  const { nome, valor } = req.body as { nome: string; valor: number }
+  const { nome, valor, lucroFamiliaPorcentagem } = req.body as { nome: string; valor: number; lucroFamiliaPorcentagem?: number }
   const data = readData()
-  const nova = { id: data.nextLavagemPorcId, nome, valor }
+  const nova = { id: data.nextLavagemPorcId, nome, valor, lucroFamiliaPorcentagem }
   data.lavagemPorcentagens.push(nova)
   data.nextLavagemPorcId++
   writeData(data)
-  audit('CONFIG_UPDATED', req, `Porcentagem de lavagem criada: ${nome} (${valor}%)`)
+  audit('CONFIG_UPDATED', req, `Porcentagem de lavagem criada: ${nome} (${valor}% | lucro ${lucroFamiliaPorcentagem ?? 100}%)`)
   res.status(201).json(data.lavagemPorcentagens)
 })
 
 router.put('/lavagem-porcentagens/:id', requireAuth, canEditConfig, validateBody(lavagemPorcentagemSchema), (req: Request, res: Response): void => {
   const id = parseInt(String(req.params.id), 10)
-  const { nome, valor } = req.body as { nome: string; valor: number }
+  const { nome, valor, lucroFamiliaPorcentagem } = req.body as { nome: string; valor: number; lucroFamiliaPorcentagem?: number }
   const data = readData()
   const p = data.lavagemPorcentagens.find(x => x.id === id)
   if (!p) { res.status(404).json({ error: 'Porcentagem não encontrada' }); return }
-  p.nome = nome; p.valor = valor
+  p.nome = nome; p.valor = valor; p.lucroFamiliaPorcentagem = lucroFamiliaPorcentagem
   writeData(data)
-  audit('CONFIG_UPDATED', req, `Porcentagem de lavagem atualizada: ${nome} (${valor}%)`)
+  audit('CONFIG_UPDATED', req, `Porcentagem de lavagem atualizada: ${nome} (${valor}% | lucro ${lucroFamiliaPorcentagem ?? 100}%)`)
   res.json(data.lavagemPorcentagens)
 })
 

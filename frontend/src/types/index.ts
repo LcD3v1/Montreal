@@ -107,6 +107,7 @@ export interface LavagemRegistro {
   dinheiroLimpo: number
   porcentagem?: number
   porcentagemNome?: string
+  lucroFamiliaPorcentagem?: number
   responsavel?: string
   observacoes?: string
   criadoEm: string
@@ -116,6 +117,7 @@ export interface LavagemPorcentagem {
   id: number
   nome: string
   valor: number
+  lucroFamiliaPorcentagem?: number
 }
 
 export interface LavagemResponse {
