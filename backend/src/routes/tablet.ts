@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth } from '../middleware/auth'
 import { requireEdit, requireView } from '../middleware/roles'
-import { validateBody, tabletMovimentoSchema } from '../middleware/validate'
+import { validateBody, tabletMovimentoSchema, bulkDeleteSchema } from '../middleware/validate'
 import { audit } from '../security/audit'
 import { readData, writeData } from '../data'
 import { broadcast } from '../realtime'
@@ -78,6 +78,23 @@ router.post('/movimentos', requireAuth, requireEdit('tablet'), validateBody(tabl
   audit('TABLET_MOVIMENTO', req, `${novo.tipo.toUpperCase()} ${novo.valor} ${novo.moeda} (membro ${novo.membroId})`)
   broadcast({ resource: 'tablet', action: 'created', por: req.user!.username })
   res.status(201).json(novo)
+})
+
+// Exclusão em lote — remove várias movimentações de uma vez
+router.post('/movimentos/excluir-lote', requireAuth, requireEdit('historicoTablet'), validateBody(bulkDeleteSchema), (req: Request, res: Response): void => {
+  const { ids } = req.body as { ids: number[] }
+  const alvo = new Set(ids)
+
+  const data = readData()
+  const antes = data.tabletMovimentos.length
+  data.tabletMovimentos = data.tabletMovimentos.filter(m => !alvo.has(m.id))
+  const removidos = antes - data.tabletMovimentos.length
+  if (removidos === 0) { res.status(404).json({ error: 'Nenhuma movimentação encontrada' }); return }
+
+  writeData(data)
+  audit('TABLET_MOVIMENTO_DELETED', req, `Lote — ${removidos} removida(s): ${ids.join(', ')}`)
+  broadcast({ resource: 'tablet', action: 'deleted', por: req.user!.username })
+  res.json({ ok: true, removidos })
 })
 
 router.delete('/movimentos/:id', requireAuth, requireEdit('historicoTablet'), (req: Request, res: Response): void => {

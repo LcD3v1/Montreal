@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2 } from 'lucide-react'
-import { useLavagens, useDeleteLavagem } from '@/hooks/useLavagem'
+import { useLavagens, useDeleteLavagem, useDeleteLavagensLote } from '@/hooks/useLavagem'
+import { useSelection } from '@/hooks/useSelection'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { canEdit as canEditArea } from '@/lib/permissions'
 import GlowCard from '@/components/ui/GlowCard'
 import LoadingHud from '@/components/ui/LoadingHud'
+import { SelectAllCheckbox, RowCheckbox, BulkDeleteBar } from '@/components/ui/SelectionControls'
 import { formatDate } from '@/lib/utils'
 import { fmtMoney } from '@/lib/money'
 import type { LavagemRegistro } from '@/types'
@@ -23,6 +25,7 @@ export default function HistoricoLavagemPage() {
 
   const { data, isLoading } = useLavagens({})
   const deleteMut = useDeleteLavagem()
+  const deleteLote = useDeleteLavagensLote()
 
   const [fFamilia, setFFamilia] = useState('')
   const [fDe, setFDe] = useState('')
@@ -38,6 +41,8 @@ export default function HistoricoLavagemPage() {
     return true
   }), [lavagens, fFamilia, fDe, fAte])
 
+  const sel = useSelection(filtrados.map(l => l.id))
+
   const totSujo = filtrados.reduce((s, l) => s + l.dinheiroSujo, 0)
   const totLimpo = filtrados.reduce((s, l) => s + l.dinheiroLimpo, 0)
   const totLucro = filtrados.reduce((s, l) => s + calcLucro(l), 0)
@@ -47,6 +52,19 @@ export default function HistoricoLavagemPage() {
     try { await deleteMut.mutateAsync(id); addToast('success', 'Registro removido.') }
     catch { addToast('error', 'Erro ao remover.') }
   }
+
+  async function handleDeleteLote() {
+    if (!confirm(`Apagar ${sel.count} registro(s) selecionado(s)?`)) return
+    try {
+      await deleteLote.mutateAsync(sel.ids)
+      addToast('success', `${sel.count} registro(s) removido(s).`)
+      sel.clear()
+    } catch {
+      addToast('error', 'Erro ao remover.')
+    }
+  }
+
+  const colCount = 10 + (canEdit ? 1 : 0)
 
   if (isLoading) return <LoadingHud />
 
@@ -72,12 +90,21 @@ export default function HistoricoLavagemPage() {
         </div>
       </GlowCard>
 
+      {canEdit && (
+        <BulkDeleteBar count={sel.count} onDelete={handleDeleteLote} onClear={sel.clear} isDeleting={deleteLote.isPending} label="registro(s)" />
+      )}
+
       {/* Tabela */}
       <GlowCard>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-bdr">
+                {canEdit && (
+                  <th className="px-4 py-3 w-10">
+                    <SelectAllCheckbox checked={sel.todosMarcados} indeterminate={sel.algunsMarcados} onChange={sel.toggleTodos} />
+                  </th>
+                )}
                 {['Data', 'Família', 'Sujo', 'Limpo', '%', 'Lucro %', 'Lucro', 'Responsável', 'Obs', ''].map(h => (
                   <th key={h} className="text-left font-mono text-xs text-txt3 tracking-wider px-4 py-3">{h}</th>
                 ))}
@@ -86,10 +113,15 @@ export default function HistoricoLavagemPage() {
             <tbody>
               <AnimatePresence>
                 {filtrados.length === 0 ? (
-                  <tr><td colSpan={10} className="text-center py-12 font-mono text-xs text-txt3">Nenhuma lavagem encontrada</td></tr>
+                  <tr><td colSpan={colCount} className="text-center py-12 font-mono text-xs text-txt3">Nenhuma lavagem encontrada</td></tr>
                 ) : filtrados.map(l => (
                   <motion.tr key={l.id} layout exit={{ opacity: 0, x: 200 }} transition={{ duration: 0.25 }}
-                    className="border-b border-bdr/50 hover:bg-bdr/40 transition-colors group">
+                    className={`border-b border-bdr/50 hover:bg-bdr/40 transition-colors group ${sel.isSelected(l.id) ? 'bg-red/5' : ''}`}>
+                    {canEdit && (
+                      <td className="px-4 py-3">
+                        <RowCheckbox checked={sel.isSelected(l.id)} onChange={() => sel.toggle(l.id)} />
+                      </td>
+                    )}
                     <td className="px-4 py-3 font-mono text-xs text-txt">{formatDate(l.data)}</td>
                     <td className="px-4 py-3 font-mono text-xs text-txt">{l.familia}</td>
                     <td className="px-4 py-3 font-mono text-xs text-red">{fmtMoney(l.dinheiroSujo)}</td>

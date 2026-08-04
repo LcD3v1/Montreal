@@ -39,3 +39,10 @@ export function useDeleteTabletMovimento() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tablet'] }),
   })
 }
+
+export function useDeleteTabletMovimentosLote() {
+  return useMutation({
+    mutationFn: (ids: number[]) => api.post('/tablet/movimentos/excluir-lote', { ids }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tablet'] }),
+  })
+}

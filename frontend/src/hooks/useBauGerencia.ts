@@ -48,3 +48,10 @@ export function useDeleteBauGerenciaMovimento() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bauGerencia'] }),
   })
 }
+
+export function useDeleteBauGerenciaMovimentosLote() {
+  return useMutation({
+    mutationFn: (ids: number[]) => api.post('/bau-gerencia/movimentos/excluir-lote', { ids }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bauGerencia'] }),
+  })
+}

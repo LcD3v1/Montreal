@@ -33,3 +33,10 @@ export function useDeleteLavagem() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lavagem'] }),
   })
 }
+
+export function useDeleteLavagensLote() {
+  return useMutation({
+    mutationFn: (ids: number[]) => api.post('/lavagem/excluir-lote', { ids }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lavagem'] }),
+  })
+}

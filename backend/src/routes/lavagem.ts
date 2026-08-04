@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth } from '../middleware/auth'
 import { requireView, requireEdit } from '../middleware/roles'
-import { validateBody, lavagemSchema } from '../middleware/validate'
+import { validateBody, lavagemSchema, bulkDeleteSchema } from '../middleware/validate'
 import { audit } from '../security/audit'
 import { readData, writeData } from '../data'
 import { broadcast } from '../realtime'
@@ -58,6 +58,23 @@ router.post('/', requireAuth, requireEdit('lavagem'), validateBody(lavagemSchema
 })
 
 // ── Excluir ──────────────────────────────────────────────────────────────────
+
+// ── Excluir em lote ─────────────────────────────────────────────────────────
+router.post('/excluir-lote', requireAuth, requireEdit('historicoLavagem'), validateBody(bulkDeleteSchema), (req: Request, res: Response): void => {
+  const { ids } = req.body as { ids: number[] }
+  const alvo = new Set(ids)
+
+  const data = readData()
+  const antes = data.lavagens.length
+  data.lavagens = data.lavagens.filter(l => !alvo.has(l.id))
+  const removidos = antes - data.lavagens.length
+  if (removidos === 0) { res.status(404).json({ error: 'Nenhum registro encontrado' }); return }
+
+  writeData(data)
+  audit('LAVAGEM_DELETED', req, `Lote — ${removidos} removido(s): ${ids.join(', ')}`)
+  broadcast({ resource: 'lavagem', action: 'deleted', por: req.user!.username })
+  res.json({ ok: true, removidos })
+})
 
 router.delete('/:id', requireAuth, requireEdit('historicoLavagem'), (req: Request, res: Response): void => {
   const id = parseInt(String(req.params.id), 10)

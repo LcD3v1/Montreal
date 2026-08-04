@@ -203,6 +203,11 @@ export const bauLoteSchema = z.object({
   })).min(1, 'Adicione ao menos um item').max(50),
 })
 
+// Exclusão em lote: lista de IDs a remover
+export const bulkDeleteSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1, 'Selecione ao menos um item').max(500),
+})
+
 export const recrutaCreateSchema = z.object({
   nome:        safeStr(1, 100),
   data:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),

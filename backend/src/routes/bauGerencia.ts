@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth } from '../middleware/auth'
 import { requireEdit, requireView } from '../middleware/roles'
-import { validateBody, bauMovimentoSchema, bauLoteSchema } from '../middleware/validate'
+import { validateBody, bauMovimentoSchema, bauLoteSchema, bulkDeleteSchema } from '../middleware/validate'
 import { audit } from '../security/audit'
 import { readData, writeData } from '../data'
 import { broadcast } from '../realtime'
@@ -123,6 +123,23 @@ router.post('/movimentos/lote', requireAuth, requireEdit('bauGerencia'), validat
   audit('BAU_MOVIMENTO', req, `[GERÊNCIA] ${body.tipo.toUpperCase()} (lote) ${criados.map(c => `${c.quantidade}x ${c.item}`).join(', ')}`)
   broadcast({ resource: 'bauGerencia', action: 'created', por: req.user!.username })
   res.status(201).json(criados)
+})
+
+// Exclusão em lote — remove várias movimentações de uma vez
+router.post('/movimentos/excluir-lote', requireAuth, requireEdit('historicoBauGerencia'), validateBody(bulkDeleteSchema), (req: Request, res: Response): void => {
+  const { ids } = req.body as { ids: number[] }
+  const alvo = new Set(ids)
+
+  const data = readData()
+  const antes = data.bauGerenciaMovimentos.length
+  data.bauGerenciaMovimentos = data.bauGerenciaMovimentos.filter(m => !alvo.has(m.id))
+  const removidos = antes - data.bauGerenciaMovimentos.length
+  if (removidos === 0) { res.status(404).json({ error: 'Nenhuma movimentação encontrada' }); return }
+
+  writeData(data)
+  audit('BAU_MOVIMENTO_DELETED', req, `[GERÊNCIA] Lote — ${removidos} removida(s): ${ids.join(', ')}`)
+  broadcast({ resource: 'bauGerencia', action: 'deleted', por: req.user!.username })
+  res.json({ ok: true, removidos })
 })
 
 router.delete('/movimentos/:id', requireAuth, requireEdit('historicoBauGerencia'), (req: Request, res: Response): void => {

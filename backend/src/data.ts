@@ -128,7 +128,7 @@ export function reconcileAusencias(data: MontrealData): boolean {
       a.status = 'encerrada'
       changed = true
       const m = data.membros.find(mm => mm.id === a.membroId)
-      if (m && String(m.status) === 'AusÃªncia') {
+      if (m && String(m.status) === 'Ausência') {
         const aindaAusente = data.ausencias.some(o =>
           o.id !== a.id && o.membroId === a.membroId && o.status === 'ativa' &&
           o.dataInicio <= hoje && o.dataFim >= hoje,
