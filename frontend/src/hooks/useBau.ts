@@ -59,6 +59,7 @@ export function useDeleteBauMovimento() {
 export function useDeleteBauMovimentosLote() {
   return useMutation({
     mutationFn: (ids: number[]) => api.post('/bau/movimentos/excluir-lote', { ids }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bau'] }),
+    // fire-and-forget: não aguardar o refetch, senão isPending ("APAGANDO…") só libera após recarregar a lista
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['bau'] }) },
   })
 }

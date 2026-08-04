@@ -52,6 +52,7 @@ export function useDeleteBauGerenciaMovimento() {
 export function useDeleteBauGerenciaMovimentosLote() {
   return useMutation({
     mutationFn: (ids: number[]) => api.post('/bau-gerencia/movimentos/excluir-lote', { ids }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bauGerencia'] }),
+    // fire-and-forget: não aguardar o refetch, senão isPending ("APAGANDO…") só libera após recarregar a lista
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['bauGerencia'] }) },
   })
 }

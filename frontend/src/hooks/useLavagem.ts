@@ -37,6 +37,7 @@ export function useDeleteLavagem() {
 export function useDeleteLavagensLote() {
   return useMutation({
     mutationFn: (ids: number[]) => api.post('/lavagem/excluir-lote', { ids }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['lavagem'] }),
+    // fire-and-forget: não aguardar o refetch, senão isPending ("APAGANDO…") só libera após recarregar a lista
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['lavagem'] }) },
   })
 }

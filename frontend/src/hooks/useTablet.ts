@@ -43,6 +43,7 @@ export function useDeleteTabletMovimento() {
 export function useDeleteTabletMovimentosLote() {
   return useMutation({
     mutationFn: (ids: number[]) => api.post('/tablet/movimentos/excluir-lote', { ids }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tablet'] }),
+    // fire-and-forget: não aguardar o refetch, senão isPending ("APAGANDO…") só libera após recarregar a lista
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ['tablet'] }) },
   })
 }
