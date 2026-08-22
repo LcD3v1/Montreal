@@ -146,21 +146,42 @@ export const comunicadoUpdateSchema = z.object({
   status:    z.enum(STATUS_COMUNICADO).optional(),
 }).refine(b => Object.keys(b).length > 0, { message: 'Nenhum campo fornecido' })
 
-export const lavagemSchema = z.object({
-  data:            z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
-  familia:         safeStr(1, 80),
-  dinheiroSujo:    z.number().min(0).max(1_000_000_000),
-  dinheiroLimpo:   z.number().min(0).max(1_000_000_000),
-  porcentagem:     z.number().min(0).max(100).optional(),
-  porcentagemNome: safeStrOpt(60).optional(),
-  lucroFamiliaPorcentagem: z.number().min(0).max(100).optional(),
-  observacoes:     safeStrOpt(300).default(''),
+// ── Vendas de arma ────────────────────────────────────────────────────────
+
+export const municaoTipoSchema = z.object({
+  nome:           safeStr(1, 60),
+  precoUnitario:  z.number().min(0).max(1_000_000_000),
+  moeda:          z.enum(['Real', 'Dólar']).default('Real'),
+  ativo:          z.boolean().default(true),
 })
 
-export const lavagemPorcentagemSchema = z.object({
-  nome:                    safeStr(1, 60),
-  valor:                   z.number().min(0).max(100),
-  lucroFamiliaPorcentagem: z.number().min(0).max(100).optional(),
+export const municaoTipoUpdateSchema = z.object({
+  nome:           safeStr(1, 60).optional(),
+  precoUnitario:  z.number().min(0).max(1_000_000_000).optional(),
+  moeda:          z.enum(['Real', 'Dólar']).optional(),
+  ativo:          z.boolean().optional(),
+}).refine(body => Object.keys(body).filter(k => body[k as keyof typeof body] !== undefined).length > 0, {
+  message: 'Nenhum campo fornecido',
+})
+
+export const municaoMovimentoSchema = z.object({
+  data:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
+  tipo:        z.enum(['entrada', 'saida']),
+  municaoId:   z.number().int().positive(),
+  quantidade:  z.number().int().positive().max(MAX_QUANTIDADE_BAU),
+  observacoes: z.string().max(500).optional(),
+})
+
+export const vendaSchema = z.object({
+  data:        z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida'),
+  membroId:    z.number().int().positive(),
+  familia:     safeStr(1, 100),
+  pagamento:   z.enum(['dinheiro', 'troca']),
+  itens: z.array(z.object({
+    municaoId:  z.number().int().positive(),
+    quantidade: z.number().int().positive().max(MAX_QUANTIDADE_BAU),
+  })).min(1, 'O carrinho está vazio'),
+  observacoes: z.string().max(500).optional(),
 })
 
 export const tabletMovimentoSchema = z.object({

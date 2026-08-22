@@ -4,7 +4,8 @@ Sistema de gestão de facção (GTA RP) — full-stack TypeScript.
 Backend **Express** + frontend **React/Vite** (o backend serve o frontend buildado, então é **um único serviço**).
 
 Módulos: Dashboard, Comunicados (tempo real via SSE), Registrar Ação (Tiro/Fuga), Histórico,
-Estatísticas, Membros, Ausências, Baú + Estoque, Tablet (saque/depósito), Lavagem, e Configurações
+Estatísticas, Membros, Ausências, Baú + Estoque, Tablet (saque/depósito), Venda de Arma
+(carrinho + estoque próprio com baixa automática + histórico), e Configurações
 com **permissões por área (ver/editar) por conta**.
 
 ---

@@ -13,12 +13,8 @@ export default function GlowCard({ children, className = '', onClick }: Props) {
       onClick={onClick}
       style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
-      {/* Textura de mármore vermelho/preto (igual ao mockup) */}
-      <div className="card-marble">
-        <svg width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
-          <rect width="100%" height="100%" filter="url(#mf-rwb)" />
-        </svg>
-      </div>
+      {/* Textura de mármore escuro com veios vermelhos (premium sóbrio) */}
+      <div className="card-marble" />
       <div className="gc-content">{children}</div>
     </div>
   )

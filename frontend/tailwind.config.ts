@@ -21,6 +21,8 @@ export default {
         green: '#ffffff',
         red:   '#CC0000',
         blue:  '#8a8a8a',
+        danger: '#EF4444',
+        positive: '#22C55E',
       },
       fontFamily: {
         orbitron: ['Orbitron', 'sans-serif'],

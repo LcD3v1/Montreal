@@ -20,8 +20,9 @@ import HistoricoBauGerenciaPage from '@/components/sections/HistoricoBauGerencia
 import EstoqueGerenciaPage from '@/components/sections/EstoqueGerenciaPage'
 import TabletPage from '@/components/sections/TabletPage'
 import HistoricoTabletPage from '@/components/sections/HistoricoTabletPage'
-import LavagemPage from '@/components/sections/LavagemPage'
-import HistoricoLavagemPage from '@/components/sections/HistoricoLavagemPage'
+import VendasPage from '@/components/sections/VendasPage'
+import HistoricoVendasPage from '@/components/sections/HistoricoVendasPage'
+import EstoqueMunicaoPage from '@/components/sections/EstoqueMunicaoPage'
 import ConfiguracoesPage from '@/components/sections/ConfiguracoesPage'
 
 function destinoInicial(user: ReturnType<typeof useAuthStore.getState>['user']): string {
@@ -93,8 +94,9 @@ export default function App() {
             <Route path="gerencia/estoque" element={<ProtectedRoute area="estoqueGerencia"><EstoqueGerenciaPage /></ProtectedRoute>} />
             <Route path="tablet" element={<ProtectedRoute area="tablet"><TabletPage /></ProtectedRoute>} />
             <Route path="tablet/historico" element={<ProtectedRoute area="historicoTablet"><HistoricoTabletPage /></ProtectedRoute>} />
-            <Route path="lavagem" element={<ProtectedRoute area="lavagem"><LavagemPage /></ProtectedRoute>} />
-            <Route path="lavagem/historico" element={<ProtectedRoute area="historicoLavagem"><HistoricoLavagemPage /></ProtectedRoute>} />
+            <Route path="vendas" element={<ProtectedRoute area="vendas"><VendasPage /></ProtectedRoute>} />
+            <Route path="vendas/historico" element={<ProtectedRoute area="historicoVendas"><HistoricoVendasPage /></ProtectedRoute>} />
+            <Route path="vendas/estoque" element={<ProtectedRoute area="estoqueMunicao"><EstoqueMunicaoPage /></ProtectedRoute>} />
             <Route path="configuracoes" element={<ProtectedRoute area="configuracoes"><ConfiguracoesPage /></ProtectedRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

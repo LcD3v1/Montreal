@@ -9,13 +9,13 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANTS = {
-  primary: 'border-gold text-gold hover:bg-gold/10',
-  danger:  'border-red text-red hover:bg-red/10',
-  ghost:   'border-bdrg text-txt2 hover:border-gold hover:text-gold',
+  primary: 'border border-transparent bg-gold text-white shadow-[0_6px_18px_rgba(224,27,43,0.28)] hover:bg-gold2',
+  danger:  'border border-danger/40 text-danger bg-danger/5 hover:bg-danger/15',
+  ghost:   'border border-bdr2 text-txt2 hover:border-bdrg hover:text-txt hover:bg-white/[0.03]',
 }
 
 const SIZES = {
-  sm: 'px-3 py-1.5 text-xs',
+  sm: 'px-3.5 py-1.5 text-xs',
   md: 'px-5 py-2.5 text-sm',
   lg: 'px-8 py-3 text-base',
 }
@@ -26,11 +26,11 @@ export default function HudButton({
 }: Props) {
   return (
     <motion.button
-      whileHover={{ scale: disabled || loading ? 1 : 1.03 }}
+      whileHover={{ scale: disabled || loading ? 1 : 1.02 }}
       whileTap={{ scale: disabled || loading ? 1 : 0.97 }}
       disabled={disabled || loading}
       className={`
-        border font-orbitron tracking-wider rounded transition-colors duration-200
+        font-semibold tracking-wide rounded-lg transition-colors duration-200 cursor-pointer
         disabled:opacity-40 disabled:cursor-not-allowed
         ${VARIANTS[variant]} ${SIZES[size]} ${className}
       `}

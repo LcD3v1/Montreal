@@ -83,25 +83,62 @@ export interface BauMovimento {
   observacoes?: string
 }
 
-export interface LavagemRegistro {
-  id: number
-  data: string
-  familia: string
-  dinheiroSujo: number
-  dinheiroLimpo: number
-  porcentagem?: number
-  porcentagemNome?: string
-  lucroFamiliaPorcentagem?: number
-  responsavel?: string
-  observacoes?: string
-  criadoEm: string
-}
+// ── Vendas de arma ────────────────────────────────────────────────────────
 
-export interface LavagemPorcentagem {
+export type StatusVenda = 'pendente' | 'paga'
+export type PagamentoVenda = 'dinheiro' | 'troca'
+export type TipoMovimentoMunicao = 'entrada' | 'saida'
+
+export interface MunicaoTipo {
   id: number
   nome: string
-  valor: number
-  lucroFamiliaPorcentagem?: number
+  precoUnitario: number
+  moeda: Moeda
+  /** Aposenta o tipo sem apagar o histórico que o referencia. */
+  ativo: boolean
+}
+
+export interface MunicaoMovimento {
+  id: number
+  data: string
+  tipo: TipoMovimentoMunicao
+  municaoId: number
+  quantidade: number
+  /** Preenchido quando a saída veio de uma venda — dá rastreabilidade e permite estorno. */
+  vendaId?: number
+  responsavel?: string
+  observacoes?: string
+}
+
+/**
+ * `nomeMunicao` e `precoUnitario` são cópias do momento da venda, de propósito:
+ * se o preço for reajustado depois, a venda antiga precisa continuar mostrando
+ * o que foi cobrado na época.
+ */
+export interface VendaItem {
+  municaoId: number
+  nomeMunicao: string
+  quantidade: number
+  precoUnitario: number
+  subtotal: number
+}
+
+export interface Venda {
+  id: number
+  data: string
+  /** Membro que fez a venda. */
+  membroId: number
+  familia: string
+  pagamento: PagamentoVenda
+  itens: VendaItem[]
+  total: number
+  moeda: Moeda
+  status: StatusVenda
+  criadoPor?: string
+  criadoEm: string
+  pagoEm?: string
+  pagoPor?: string
+  observacoes?: string
 }
 
 export type StatusComunicado = 'Aberto' | 'Em andamento' | 'Concluído' | 'Cancelado'
@@ -193,8 +230,9 @@ export interface MontrealData {
   tabletMovimentos: TabletMovimento[]
   ausencias: Ausencia[]
   comunicados: Comunicado[]
-  lavagens: LavagemRegistro[]
-  lavagemPorcentagens: LavagemPorcentagem[]
+  municaoTipos: MunicaoTipo[]
+  municaoMovimentos: MunicaoMovimento[]
+  vendas: Venda[]
   nextMemId: number
   nextAcId: number
   nextRecId: number
@@ -205,8 +243,9 @@ export interface MontrealData {
   nextTabletMovId: number
   nextAusenciaId: number
   nextComunicadoId: number
-  nextLavagemId: number
-  nextLavagemPorcId: number
+  nextMunicaoTipoId: number
+  nextMunicaoMovId: number
+  nextVendaId: number
   logo: string
   membrosOrder: number[]
 }

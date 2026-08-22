@@ -104,32 +104,82 @@ export interface BauEstoqueItem {
   quantidade: number
 }
 
-export interface LavagemRegistro {
-  id: number
-  data: string
-  familia: string
-  dinheiroSujo: number
-  dinheiroLimpo: number
-  porcentagem?: number
-  porcentagemNome?: string
-  lucroFamiliaPorcentagem?: number
-  responsavel?: string
-  observacoes?: string
-  criadoEm: string
-}
+// ── Vendas de arma ────────────────────────────────────────────────────────
 
-export interface LavagemPorcentagem {
+export type StatusVenda = 'pendente' | 'paga'
+export type PagamentoVenda = 'dinheiro' | 'troca'
+
+export interface MunicaoTipo {
   id: number
   nome: string
-  valor: number
-  lucroFamiliaPorcentagem?: number
+  precoUnitario: number
+  moeda: Moeda
+  ativo: boolean
 }
 
-export interface LavagemResponse {
-  lavagens: LavagemRegistro[]
+/** Linha do estoque calculado — o backend devolve nome e preço já resolvidos. */
+export interface MunicaoEstoque {
+  municaoId: number
+  nome: string
+  entradas: number
+  saidas: number
+  quantidade: number
+  precoUnitario: number
+  moeda: Moeda
+  ativo: boolean
+}
+
+export interface MunicaoMovimento {
+  id: number
+  data: string
+  tipo: 'entrada' | 'saida'
+  municaoId: number
+  quantidade: number
+  vendaId?: number
+  responsavel?: string
+  observacoes?: string
+}
+
+/** `nomeMunicao` e `precoUnitario` são do momento da venda, não do catálogo atual. */
+export interface VendaItem {
+  municaoId: number
+  nomeMunicao: string
+  quantidade: number
+  precoUnitario: number
+  subtotal: number
+}
+
+export interface Venda {
+  id: number
+  data: string
+  membroId: number
+  familia: string
+  pagamento: PagamentoVenda
+  itens: VendaItem[]
   total: number
-  totalSujo: number
-  totalLimpo: number
+  moeda: Moeda
+  status: StatusVenda
+  criadoPor?: string
+  criadoEm: string
+  pagoEm?: string
+  pagoPor?: string
+  observacoes?: string
+}
+
+export interface VendasResponse {
+  vendas: Venda[]
+  total: number
+  page: number
+  limit: number
+  totalPendente: number
+  totalPago: number
+}
+
+export interface MunicaoMovimentosResponse {
+  movimentos: MunicaoMovimento[]
+  total: number
+  page: number
+  limit: number
 }
 
 export type StatusComunicado = 'Aberto' | 'Em andamento' | 'Concluído' | 'Cancelado'

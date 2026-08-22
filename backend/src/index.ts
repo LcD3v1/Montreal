@@ -17,7 +17,7 @@ import bauGerenciaRoutes from './routes/bauGerencia'
 import tabletRoutes from './routes/tablet'
 import ausenciasRoutes from './routes/ausencias'
 import comunicadosRoutes from './routes/comunicados'
-import lavagemRoutes from './routes/lavagem'
+import vendasRoutes from './routes/vendas'
 import eventsRoutes from './routes/events'
 
 const app = express()
@@ -64,7 +64,7 @@ app.use('/api/bau-gerencia', bauGerenciaRoutes)
 app.use('/api/tablet', tabletRoutes)
 app.use('/api/ausencias', ausenciasRoutes)
 app.use('/api/comunicados', comunicadosRoutes)
-app.use('/api/lavagem', lavagemRoutes)
+app.use('/api/vendas', vendasRoutes)
 app.use('/api/events', eventsRoutes)
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }))
