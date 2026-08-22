@@ -524,6 +524,19 @@ input[type=range].hud-slider::-moz-range-thumb {
 
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+/* ── Fundo em vídeo atrás dos cards (clima Montreal / noir) ────────────────── */
+.app-bg-video {
+  position: absolute; inset: 0; z-index: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  pointer-events: none; opacity: 0.6;
+}
+/* Escurecimento sobre o vídeo — mantém os cards legíveis */
+.app-bg-scrim {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(rgba(10,10,11,0.42), rgba(10,10,11,0.66));
+}
+.app-content { background: transparent; }
+
 /* ── Textura premium unificada — mármore sutil em todos os cards ────────────── */
 .card-marble, .hero-marble, .hero-marble-side, .marble-strip {
   position: absolute; inset: 0; pointer-events: none; z-index: 0;

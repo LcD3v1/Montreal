@@ -51,7 +51,8 @@ function LoginParticles() {
   )
 }
 
-const BOOT_TEXT = 'SISTEMA MONTREAL v2.0 — AUTENTICAÇÃO REQUERIDA'
+const BOOT_TEXT = 'SISTEMA MONTREAL v3.0 — AUTENTICAÇÃO REQUERIDA'
+const SCRAMBLE_GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#%$&/\\<>*+=-░▒▓'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -66,17 +67,25 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
   const { data: logoData } = useLogo()
 
-  // Animação de texto digitando
+  // Animação de "decodificação": glyphs aleatórios travam no texto final, da esquerda p/ direita
   useEffect(() => {
-    let i = 0
+    let frame = 0
     const interval = setInterval(() => {
-      setBootText(BOOT_TEXT.slice(0, i))
-      i++
-      if (i > BOOT_TEXT.length) {
+      const revealed = Math.floor(frame / 2)
+      let out = ''
+      for (let k = 0; k < BOOT_TEXT.length; k++) {
+        const ch = BOOT_TEXT[k]
+        if (ch === ' ' || k < revealed) out += ch
+        else out += SCRAMBLE_GLYPHS[Math.floor(Math.random() * SCRAMBLE_GLYPHS.length)]
+      }
+      setBootText(out)
+      frame++
+      if (revealed >= BOOT_TEXT.length) {
+        setBootText(BOOT_TEXT)
         clearInterval(interval)
         setTimeout(() => setShowForm(true), 400)
       }
-    }, 35)
+    }, 40)
     return () => clearInterval(interval)
   }, [])
 

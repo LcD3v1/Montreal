@@ -30,10 +30,20 @@ export default function AppShell() {
       <div className="top-line" />
       <Sidebar />
 
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <Topbar />
+      <div className="relative flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* Fundo em vídeo (clima Montreal / noir), atrás de todo o conteúdo */}
+        <video
+          className="app-bg-video"
+          autoPlay muted loop playsInline
+          poster="/bg-cards.png"
+          src="/bg-montreal.mp4"
+        />
+        <div className="app-bg-scrim" />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="relative z-10 flex flex-col flex-1 min-h-0">
+          <Topbar />
+
+          <main className="app-content flex-1 overflow-y-auto overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -46,7 +56,8 @@ export default function AppShell() {
               <Outlet />
             </motion.div>
           </AnimatePresence>
-        </main>
+          </main>
+        </div>
       </div>
 
       <ToastContainer />
