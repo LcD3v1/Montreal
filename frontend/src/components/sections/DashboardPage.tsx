@@ -1,11 +1,20 @@
 import { useMemo } from 'react'
+import { DollarSign, TrendingUp } from 'lucide-react'
 import { useAllAcoes } from '@/hooks/useAcoes'
 import { useMembros } from '@/hooks/useMembros'
 import LoadingHud from '@/components/ui/LoadingHud'
 import { calcWinRate, formatDate } from '@/lib/utils'
+import { fmtMoeda } from '@/lib/money'
 import type { Membro } from '@/types'
 
 const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+
+/** Formato compacto para caber sobre as barras (ex: 15000 → "15k", 1500000 → "1.5M"). */
+function compactMoney(v: number): string {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(v % 1_000_000 === 0 ? 0 : 1)}M`
+  if (v >= 1_000) return `${(v / 1_000).toFixed(v % 1_000 === 0 ? 0 : 1)}k`
+  return String(v)
+}
 
 // Cores (paleta vermelho / branco / cinza)
 const C_DERROTA = '#CC0000'
@@ -48,6 +57,40 @@ export default function DashboardPage() {
     const comAdv = (membros ?? []).filter((m: Membro) => m.adv1 || m.adv2 || m.adv3).length
     return { ativos, comAdv, total: acoes.length, winRateTiro: calcWinRate(tiroAcoes) }
   }, [membros, acoes, tiroAcoes])
+
+  /**
+   * Arrecadação diária — soma o `valor` das ações agrupado por dia (data local).
+   * "Hoje" muda sozinho à meia-noite, então o total do dia reseta naturalmente;
+   * o histórico por dia é derivado das ações persistidas (nada se perde).
+   */
+  const arrecadacao = useMemo(() => {
+    const ymd = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const hoje = ymd(new Date())
+
+    const porDia = new Map<string, { real: number; dolar: number }>()
+    for (const a of acoes) {
+      if (!a.valor || a.valor <= 0) continue
+      const cur = porDia.get(a.data) ?? { real: 0, dolar: 0 }
+      if (a.moeda === 'Dólar') cur.dolar += a.valor
+      else cur.real += a.valor
+      porDia.set(a.data, cur)
+    }
+
+    const dias = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (6 - i))
+      const key = ymd(d)
+      const v = porDia.get(key) ?? { real: 0, dolar: 0 }
+      return {
+        data: key,
+        label: `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`,
+        real: v.real, dolar: v.dolar, total: v.real + v.dolar, hoje: key === hoje,
+      }
+    })
+    const h = porDia.get(hoje) ?? { real: 0, dolar: 0 }
+    return { hojeReal: h.real, hojeDolar: h.dolar, dias, maxDia: Math.max(1, ...dias.map(d => d.total)) }
+  }, [acoes])
 
   const counts = useMemo(() => {
     const v = tiroAcoes.filter(a => a.resultado === 'Vitória').length
@@ -122,6 +165,35 @@ export default function DashboardPage() {
             <div className="win-zone">
               <span className="win-lbl">SUCESSO · FUGA</span>
               <span className="win-val">{sucessoFuga}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ARRECADAÇÃO DO DIA + HISTÓRICO */}
+        <div className="row2">
+          <div className="money-card">
+            <span className="money-lbl"><DollarSign size={12} /> ARRECADAÇÃO · HOJE</span>
+            <span className="money-val">{fmtMoeda(arrecadacao.hojeReal, 'Real')}</span>
+            {arrecadacao.hojeDolar > 0 && (
+              <span className="money-val usd">{fmtMoeda(arrecadacao.hojeDolar, 'Dólar')}</span>
+            )}
+            <span className="money-sub">Soma o valor das ações de hoje · reseta à meia-noite</span>
+          </div>
+
+          <div className="icard">
+            <div className="card-marble" />
+            <div className="card-title"><TrendingUp size={12} className="text-gold" />ARRECADAÇÃO · ÚLTIMOS 7 DIAS</div>
+            <div className="rev-bars">
+              {arrecadacao.dias.map(d => (
+                <div className="rev-col" key={d.data} title={`${d.label}: ${fmtMoeda(d.total, 'Real')}`}>
+                  <span className="rev-amt">{d.total > 0 ? compactMoney(d.total) : ''}</span>
+                  <div
+                    className={`rev-bar${d.hoje ? ' today' : ''}`}
+                    style={{ height: `${Math.round((d.total / arrecadacao.maxDia) * 100)}%` }}
+                  />
+                  <span className="rev-day">{d.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

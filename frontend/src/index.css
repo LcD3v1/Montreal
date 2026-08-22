@@ -523,3 +523,37 @@ input[type=range].hud-slider::-moz-range-thumb {
 .rank-pct  { font-family: 'Orbitron', sans-serif; font-size: 9px; color: var(--red); width: 32px; text-align: right; }
 
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Textura premium unificada — mármore sutil em todos os cards ────────────── */
+.card-marble, .hero-marble, .hero-marble-side, .marble-strip {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  width: auto; height: auto;
+  background: url('/tex-marmore.png') center / cover no-repeat;
+  opacity: 0.08; mix-blend-mode: screen;
+}
+.card-marble > svg, .hero-marble > svg, .hero-marble-side > svg, .marble-strip > svg { display: none; }
+
+/* ── Card de arrecadação (destaque financeiro) ─────────────────────────────── */
+.money-card {
+  position: relative; overflow: hidden;
+  background: radial-gradient(120% 140% at 0% 0%, rgba(224,27,43,0.10), transparent 55%), var(--card);
+  border: 1px solid var(--bdr2); border-radius: var(--radius);
+  box-shadow: var(--shadow-1); padding: 20px 22px;
+  display: flex; flex-direction: column; justify-content: center; gap: 6px;
+}
+.money-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(to bottom, var(--gold2), var(--gold)); z-index: 2;
+}
+.money-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--txt3); display: flex; align-items: center; gap: 8px; }
+.money-val { font-family: var(--font-display); font-weight: 900; font-size: 34px; line-height: 1; color: #fff; }
+.money-val.usd { font-size: 20px; color: var(--txt2); }
+.money-sub { font-size: 11px; color: var(--txt3); }
+
+/* Mini barras de histórico de arrecadação */
+.rev-bars { display: flex; align-items: flex-end; gap: 8px; height: 110px; padding-top: 6px; }
+.rev-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+.rev-bar { width: 100%; min-height: 3px; border-radius: 3px 3px 0 0; background: linear-gradient(to top, rgba(224,27,43,0.85), rgba(224,27,43,0.35)); transition: height 0.4s ease; }
+.rev-bar.today { background: linear-gradient(to top, var(--gold2), rgba(245,65,79,0.5)); box-shadow: 0 0 12px rgba(224,27,43,0.35); }
+.rev-day { font-family: var(--font-mono); font-size: 9px; color: var(--txt3); }
+.rev-amt { font-family: var(--font-mono); font-size: 9px; color: var(--txt2); white-space: nowrap; }
