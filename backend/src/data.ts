@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import bcrypt from 'bcrypt'
 import { MontrealData, Conta } from './types'
-import { ensureAllAreas, fullPermissoes, normalizePermissoes, permissoesFromNivel } from './permissions'
+import { AREA_IDS, ensureAllAreas, fullPermissoes, normalizePermissoes, permissoesFromNivel } from './permissions'
 
 const DATA_PATH = process.env.DATA_PATH
   ? path.resolve(process.env.DATA_PATH)
@@ -65,11 +65,21 @@ export function readData(): MontrealData {
 
     merged.acoes = (merged.acoes ?? []).map(a => ({ ...a, tipo: a.tipo ?? 'tiro', moeda: a.moeda ?? 'Real' }))
     merged.tabletMovimentos = (merged.tabletMovimentos ?? []).map(m => ({ ...m, moeda: m.moeda ?? 'Real' }))
-    merged.cargosPermissao = (merged.cargosPermissao ?? []).map(c => ({
-      id: c.id,
-      nome: c.nome,
-      permissoes: normalizePermissoes(c.permissoes),
-    }))
+    // Cargos: áreas novas (que ainda não existem no JSON salvo) são liberadas para
+    // cargos administrativos, espelhando o que ensureAllAreas já faz nas contas.
+    // Sem isso, normalizePermissoes materializa toda área nova como {ver:false} e
+    // nem o admin enxerga o módulo recém-adicionado (ex: Vendas) numa base antiga.
+    merged.cargosPermissao = (merged.cargosPermissao ?? []).map(c => {
+      const raw = (c.permissoes ?? {}) as Record<string, { ver?: unknown; editar?: unknown }>
+      const ehAdmin = !!raw.configuracoes?.editar
+      const permissoes = normalizePermissoes(raw)
+      if (ehAdmin) {
+        for (const area of AREA_IDS) {
+          if (!(area in raw)) permissoes[area] = { ver: true, editar: true }
+        }
+      }
+      return { id: c.id, nome: c.nome, permissoes }
+    })
     merged.contas = (merged.contas ?? []).map(c => {
       const legado = c as Conta & { nivel?: string }
       const base = legado.permissoes ?? permissoesFromNivel(legado.nivel)
