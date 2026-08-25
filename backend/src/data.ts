@@ -65,6 +65,21 @@ export function readData(): MontrealData {
 
     merged.acoes = (merged.acoes ?? []).map(a => ({ ...a, tipo: a.tipo ?? 'tiro', moeda: a.moeda ?? 'Real' }))
     merged.tabletMovimentos = (merged.tabletMovimentos ?? []).map(m => ({ ...m, moeda: m.moeda ?? 'Real' }))
+
+    // Migra tipos de arma do modelo antigo (preço único + moeda) para dois preços
+    // (precoReal/precoDolar) com estoque único. O preço conhecido vai para a moeda
+    // em que foi cadastrado; a outra começa em 0 para ser ajustada em Configurações.
+    merged.municaoTipos = (merged.municaoTipos ?? []).map(t => {
+      const legado = t as typeof t & { precoUnitario?: number; moeda?: string }
+      if (legado.precoReal === undefined && legado.precoDolar === undefined && legado.precoUnitario !== undefined) {
+        return {
+          id: t.id, nome: t.nome, ativo: t.ativo,
+          precoReal:  legado.moeda === 'Dólar' ? 0 : legado.precoUnitario,
+          precoDolar: legado.moeda === 'Dólar' ? legado.precoUnitario : 0,
+        }
+      }
+      return { id: t.id, nome: t.nome, ativo: t.ativo, precoReal: t.precoReal ?? 0, precoDolar: t.precoDolar ?? 0 }
+    })
     // Cargos: áreas novas (que ainda não existem no JSON salvo) são liberadas para
     // cargos administrativos, espelhando o que ensureAllAreas já faz nas contas.
     // Sem isso, normalizePermissoes materializa toda área nova como {ver:false} e
@@ -123,13 +138,41 @@ export function readData(): MontrealData {
     }))
 
     return merged
-  } catch {
-    return JSON.parse(JSON.stringify(DEFAULT_DATA))
+  } catch (err) {
+    /**
+     * Arquivo EXISTE mas não pôde ser lido/parseado. NÃO podemos devolver
+     * DEFAULT_DATA: o próximo writeData gravaria os padrões por cima da base
+     * boa, e um erro transitório de leitura viraria perda de dados definitiva.
+     * Regra: ausente → cria padrão; presente e ilegível → estoura e o servidor
+     * não sobe. Melhor derrubar do que apagar.
+     */
+    throw new Error(
+      `[MONTREAL] Falha ao ler ${DATA_PATH}. Servidor interrompido de propósito para ` +
+      `não sobrescrever a base com dados vazios. Verifique o arquivo (JSON válido?) ou ` +
+      `restaure um backup. Causa: ${err instanceof Error ? err.message : String(err)}`,
+    )
   }
 }
 
+/**
+ * Escrita ATÔMICA da base, com permissões restritas (dados sensíveis em repouso).
+ * 1) grava num arquivo temporário no MESMO diretório e faz fsync (flush ao disco);
+ * 2) renomeia por cima do final — operação atômica no SO: se o processo cair no
+ *    meio, a base original permanece intacta (nunca fica um JSON truncado);
+ * 3) aplica modo 0600 (só o dono lê/escreve).
+ */
 export function writeData(data: MontrealData): void {
-  fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2), 'utf-8')
+  const json = JSON.stringify(data, null, 2)
+  const tmp = `${DATA_PATH}.${process.pid}.${Date.now()}.tmp`
+  const fd = fs.openSync(tmp, 'w', 0o600)
+  try {
+    fs.writeSync(fd, json, null, 'utf-8')
+    fs.fsyncSync(fd)
+  } finally {
+    fs.closeSync(fd)
+  }
+  fs.renameSync(tmp, DATA_PATH)
+  try { fs.chmodSync(DATA_PATH, 0o600) } catch { /* chmod é no-op em alguns FS (ex: Windows) */ }
 }
 
 export function reconcileAusencias(data: MontrealData): boolean {

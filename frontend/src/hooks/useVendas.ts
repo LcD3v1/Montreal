@@ -59,6 +59,7 @@ export function useCreateVenda() {
     mutationFn: (body: {
       data: string; membroId: number; familia: string
       pagamento: 'dinheiro' | 'troca'
+      moeda: 'Real' | 'Dólar'
       itens: { municaoId: number; quantidade: number }[]
       observacoes?: string
     }) => api.post<Venda>('/vendas', body),
@@ -90,7 +91,7 @@ export function useCreateMunicaoMovimento() {
 
 export function useCreateMunicaoTipo() {
   return useMutation({
-    mutationFn: (body: { nome: string; precoUnitario: number; moeda: string; ativo?: boolean }) =>
+    mutationFn: (body: { nome: string; precoReal: number; precoDolar: number; ativo?: boolean }) =>
       api.post<MunicaoTipo>('/vendas/tipos', body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['municao-tipos'] })
@@ -101,7 +102,7 @@ export function useCreateMunicaoTipo() {
 
 export function useUpdateMunicaoTipo() {
   return useMutation({
-    mutationFn: ({ id, ...body }: { id: number; nome?: string; precoUnitario?: number; moeda?: string; ativo?: boolean }) =>
+    mutationFn: ({ id, ...body }: { id: number; nome?: string; precoReal?: number; precoDolar?: number; ativo?: boolean }) =>
       api.patch<MunicaoTipo>(`/vendas/tipos/${id}`, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['municao-tipos'] })

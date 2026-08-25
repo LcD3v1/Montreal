@@ -36,7 +36,7 @@ export const loginSchema = z.object({
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(128),
-  newPassword: z.string().min(4).max(128),
+  newPassword: z.string().min(8, 'A senha deve ter ao menos 8 caracteres').max(128),
 })
 
 const permissoesSchema = z.record(
@@ -46,7 +46,7 @@ const permissoesSchema = z.record(
 
 export const createContaSchema = z.object({
   username: z.string().min(2).max(64).regex(/^[\w.\-]+$/, 'Usuário contém caracteres inválidos'),
-  password: z.string().min(4).max(128),
+  password: z.string().min(8, 'A senha deve ter ao menos 8 caracteres').max(128),
   cargoPermissaoId: z.number().int().positive().optional(),
   permissoes: permissoesSchema.optional(),
 })
@@ -56,7 +56,7 @@ export const updateContaSchema = z.object({
   cargoPermissaoId: z.number().int().positive().optional(),
   permissoes: permissoesSchema.optional(),
   ativo: z.boolean().optional(),
-  password: z.string().min(4).max(128).optional(),
+  password: z.string().min(8, 'A senha deve ter ao menos 8 caracteres').max(128).optional(),
 }).refine(body => Object.keys(body).length > 0, { message: 'Nenhum campo fornecido' })
 
 export const createCargoPermissaoSchema = z.object({
@@ -149,17 +149,17 @@ export const comunicadoUpdateSchema = z.object({
 // ── Vendas de arma ────────────────────────────────────────────────────────
 
 export const municaoTipoSchema = z.object({
-  nome:           safeStr(1, 60),
-  precoUnitario:  z.number().min(0).max(1_000_000_000),
-  moeda:          z.enum(['Real', 'Dólar']).default('Real'),
-  ativo:          z.boolean().default(true),
+  nome:        safeStr(1, 60),
+  precoReal:   z.number().min(0).max(1_000_000_000),
+  precoDolar:  z.number().min(0).max(1_000_000_000),
+  ativo:       z.boolean().default(true),
 })
 
 export const municaoTipoUpdateSchema = z.object({
-  nome:           safeStr(1, 60).optional(),
-  precoUnitario:  z.number().min(0).max(1_000_000_000).optional(),
-  moeda:          z.enum(['Real', 'Dólar']).optional(),
-  ativo:          z.boolean().optional(),
+  nome:        safeStr(1, 60).optional(),
+  precoReal:   z.number().min(0).max(1_000_000_000).optional(),
+  precoDolar:  z.number().min(0).max(1_000_000_000).optional(),
+  ativo:       z.boolean().optional(),
 }).refine(body => Object.keys(body).filter(k => body[k as keyof typeof body] !== undefined).length > 0, {
   message: 'Nenhum campo fornecido',
 })
@@ -177,6 +177,7 @@ export const vendaSchema = z.object({
   membroId:    z.number().int().positive(),
   familia:     safeStr(1, 100),
   pagamento:   z.enum(['dinheiro', 'troca']),
+  moeda:       z.enum(['Real', 'Dólar']).default('Real'),
   itens: z.array(z.object({
     municaoId:  z.number().int().positive(),
     quantidade: z.number().int().positive().max(MAX_QUANTIDADE_BAU),

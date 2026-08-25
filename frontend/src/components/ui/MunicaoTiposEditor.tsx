@@ -4,17 +4,18 @@ import {
   useMunicaoTipos, useCreateMunicaoTipo, useUpdateMunicaoTipo, useDeleteMunicaoTipo,
 } from '@/hooks/useVendas'
 import { useUIStore } from '@/store/uiStore'
-import { MOEDAS, fmtMoeda } from '@/lib/money'
+import { fmtMoeda } from '@/lib/money'
 import HudButton from '@/components/ui/HudButton'
-import type { Moeda, MunicaoTipo } from '@/types'
+import type { MunicaoTipo } from '@/types'
 import { PALETTE } from '@/lib/theme'
 
 /**
- * Catálogo de arma para venda: nome, preço unitário e moeda.
+ * Catálogo de arma para venda: nome + dois preços (Real e Dólar), estoque único.
+ * A moeda escolhida na tela de venda decide qual preço é usado — não existe
+ * arma separada por moeda nem estoque separado.
  *
  * Reajustar o preço aqui NÃO altera vendas já registradas — cada venda guarda
- * uma cópia do preço da época. Isso está dito na tela porque, sem essa garantia,
- * ninguém mexe no preço com medo de bagunçar o histórico.
+ * uma cópia do preço da época.
  */
 export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
   const { addToast } = useUIStore()
@@ -24,13 +25,13 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
   const remover = useDeleteMunicaoTipo()
 
   const [nome, setNome] = useState('')
-  const [preco, setPreco] = useState('')
-  const [moeda, setMoeda] = useState<Moeda>('Real')
+  const [precoReal, setPrecoReal] = useState('')
+  const [precoDolar, setPrecoDolar] = useState('')
 
   const [editId, setEditId] = useState<number | null>(null)
   const [editNome, setEditNome] = useState('')
-  const [editPreco, setEditPreco] = useState('')
-  const [editMoeda, setEditMoeda] = useState<Moeda>('Real')
+  const [editReal, setEditReal] = useState('')
+  const [editDolar, setEditDolar] = useState('')
 
   function onErr(e: unknown, fb: string) {
     const d = (e as { response?: { data?: { error?: string; details?: string[] } } })?.response?.data
@@ -38,12 +39,13 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
   }
 
   function adicionar() {
-    const p = Number(preco)
+    const r = Number(precoReal)
+    const dl = Number(precoDolar)
     if (!nome.trim()) { addToast('error', 'Informe o nome da arma.'); return }
-    if (!isFinite(p) || p < 0) { addToast('error', 'Preço inválido.'); return }
+    if (!isFinite(r) || r < 0 || !isFinite(dl) || dl < 0) { addToast('error', 'Preço inválido.'); return }
 
-    criar.mutate({ nome: nome.trim(), precoUnitario: p, moeda }, {
-      onSuccess: () => { addToast('success', 'Tipo de arma cadastrado!'); setNome(''); setPreco('') },
+    criar.mutate({ nome: nome.trim(), precoReal: r, precoDolar: dl }, {
+      onSuccess: () => { addToast('success', 'Arma cadastrada!'); setNome(''); setPrecoReal(''); setPrecoDolar('') },
       onError: e => onErr(e, 'Erro ao cadastrar.'),
     })
   }
@@ -51,17 +53,18 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
   function abrirEdicao(t: MunicaoTipo) {
     setEditId(t.id)
     setEditNome(t.nome)
-    setEditPreco(String(t.precoUnitario))
-    setEditMoeda(t.moeda)
+    setEditReal(String(t.precoReal))
+    setEditDolar(String(t.precoDolar))
   }
 
   function salvarEdicao() {
-    const p = Number(editPreco)
+    const r = Number(editReal)
+    const dl = Number(editDolar)
     if (!editNome.trim()) { addToast('error', 'Informe o nome da arma.'); return }
-    if (!isFinite(p) || p < 0) { addToast('error', 'Preço inválido.'); return }
+    if (!isFinite(r) || r < 0 || !isFinite(dl) || dl < 0) { addToast('error', 'Preço inválido.'); return }
 
-    atualizar.mutate({ id: editId!, nome: editNome.trim(), precoUnitario: p, moeda: editMoeda }, {
-      onSuccess: () => { addToast('success', 'Tipo atualizado!'); setEditId(null) },
+    atualizar.mutate({ id: editId!, nome: editNome.trim(), precoReal: r, precoDolar: dl }, {
+      onSuccess: () => { addToast('success', 'Arma atualizada!'); setEditId(null) },
       onError: e => onErr(e, 'Erro ao atualizar.'),
     })
   }
@@ -76,7 +79,7 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
   function apagar(t: MunicaoTipo) {
     if (!confirm(`Apagar "${t.nome}"?`)) return
     remover.mutate(t.id, {
-      onSuccess: () => addToast('success', 'Tipo removido.'),
+      onSuccess: () => addToast('success', 'Arma removida.'),
       onError: e => onErr(e, 'Erro ao remover.'),
     })
   }
@@ -94,24 +97,27 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
             <label htmlFor="mt-nome" className="block font-mono text-[10px] text-txt3 tracking-wider mb-1">ARMA</label>
             <input
               id="mt-nome" value={nome} onChange={e => setNome(e.target.value)}
-              placeholder="Ex: Muni Five" className={inputCls + ' w-full placeholder-txt3'}
+              placeholder="Ex: MTAR" className={inputCls + ' w-full placeholder-txt3'}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionar() } }}
             />
           </div>
-          <div className="w-36">
-            <label htmlFor="mt-preco" className="block font-mono text-[10px] text-txt3 tracking-wider mb-1">PREÇO UNIT.</label>
+          <div className="w-40">
+            <label htmlFor="mt-real" className="block font-mono text-[10px] text-txt3 tracking-wider mb-1">PREÇO EM REAL (R$)</label>
             <input
-              id="mt-preco" type="number" min={0} step="1" value={preco}
-              onChange={e => setPreco(e.target.value)} placeholder="0"
+              id="mt-real" type="number" min={0} step="1" value={precoReal}
+              onChange={e => setPrecoReal(e.target.value)} placeholder="0"
               className={inputCls + ' w-full placeholder-txt3'}
               onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionar() } }}
             />
           </div>
-          <div className="w-32">
-            <label htmlFor="mt-moeda" className="block font-mono text-[10px] text-txt3 tracking-wider mb-1">MOEDA</label>
-            <select id="mt-moeda" value={moeda} onChange={e => setMoeda(e.target.value as Moeda)} className={inputCls + ' w-full'}>
-              {MOEDAS.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+          <div className="w-40">
+            <label htmlFor="mt-dolar" className="block font-mono text-[10px] text-txt3 tracking-wider mb-1">PREÇO EM DÓLAR (US$)</label>
+            <input
+              id="mt-dolar" type="number" min={0} step="1" value={precoDolar}
+              onChange={e => setPrecoDolar(e.target.value)} placeholder="0"
+              className={inputCls + ' w-full placeholder-txt3'}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionar() } }}
+            />
           </div>
           <HudButton onClick={adicionar} disabled={criar.isPending}>
             <Plus size={14} className="inline mr-1.5" />
@@ -123,7 +129,7 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-bdr">
-            {['Arma', 'Preço unitário', 'Moeda', 'Status', ''].map(h => (
+            {['Arma', 'Preço em Real', 'Preço em Dólar', 'Status', ''].map(h => (
               <th key={h} className="text-left font-mono text-xs text-txt3 tracking-wider px-3 py-2">{h}</th>
             ))}
           </tr>
@@ -132,7 +138,7 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
           {lista.length === 0 ? (
             <tr>
               <td colSpan={5} className="text-center py-10 font-mono text-xs text-txt3">
-                Nenhum tipo de arma cadastrado.
+                Nenhuma arma cadastrada.
               </td>
             </tr>
           ) : lista.map(t => (
@@ -143,12 +149,10 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
                     <input value={editNome} onChange={e => setEditNome(e.target.value)} className={inputCls + ' w-full'} />
                   </td>
                   <td className="px-3 py-2">
-                    <input type="number" min={0} value={editPreco} onChange={e => setEditPreco(e.target.value)} className={inputCls + ' w-32'} />
+                    <input type="number" min={0} value={editReal} onChange={e => setEditReal(e.target.value)} className={inputCls + ' w-32'} />
                   </td>
                   <td className="px-3 py-2">
-                    <select value={editMoeda} onChange={e => setEditMoeda(e.target.value as Moeda)} className={inputCls}>
-                      {MOEDAS.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
+                    <input type="number" min={0} value={editDolar} onChange={e => setEditDolar(e.target.value)} className={inputCls + ' w-32'} />
                   </td>
                   <td className="px-3 py-2" />
                   <td className="px-3 py-2">
@@ -173,8 +177,8 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
                   <td className="px-3 py-3 font-mono text-xs font-bold" style={{ color: t.ativo ? PALETTE.TEXT : PALETTE.DIM }}>
                     {t.nome}
                   </td>
-                  <td className="px-3 py-3 font-mono text-xs text-txt2">{fmtMoeda(t.precoUnitario, t.moeda)}</td>
-                  <td className="px-3 py-3 font-mono text-xs text-txt3">{t.moeda}</td>
+                  <td className="px-3 py-3 font-mono text-xs text-txt2">{fmtMoeda(t.precoReal, 'Real')}</td>
+                  <td className="px-3 py-3 font-mono text-xs text-txt2">{fmtMoeda(t.precoDolar, 'Dólar')}</td>
                   <td className="px-3 py-3">
                     <span
                       className="font-mono text-[10px] px-2 py-0.5 rounded border"
@@ -221,11 +225,10 @@ export default function MunicaoTiposEditor({ canEdit }: { canEdit: boolean }) {
 
       <div className="space-y-1 border-t border-bdr2 pt-3">
         <p className="font-mono text-[10px] text-txt3">
-          Reajustar o preço não altera vendas já registradas — cada venda guarda o preço cobrado na época.
+          Cada arma tem <strong className="text-txt2">um único estoque</strong> e dois preços. A moeda escolhida na venda decide qual preço é cobrado.
         </p>
         <p className="font-mono text-[10px] text-txt3">
-          Tipos com histórico não podem ser apagados. Use <strong className="text-txt2">desativar</strong> para
-          tirá-los da tela de venda sem perder os registros antigos.
+          Reajustar o preço não altera vendas já registradas. Tipos com histórico não podem ser apagados — use <strong className="text-txt2">desativar</strong>.
         </p>
       </div>
     </div>

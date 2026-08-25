@@ -31,8 +31,8 @@ function calcEstoque(data: MontrealData) {
       ...e,
       quantidade: e.entradas - e.saidas,
       nome: tipo?.nome ?? `#${e.municaoId} (removido)`,
-      precoUnitario: tipo?.precoUnitario ?? 0,
-      moeda: tipo?.moeda ?? 'Real',
+      precoReal: tipo?.precoReal ?? 0,
+      precoDolar: tipo?.precoDolar ?? 0,
       ativo: tipo?.ativo ?? false,
     }
   })
@@ -60,7 +60,7 @@ router.post('/tipos', requireAuth, requireEdit('configuracoes'), validateBody(mu
   data.municaoTipos.push(tipo)
   writeData(data)
 
-  audit('MUNICAO_TIPO_CREATED', req, `${tipo.nome} (${tipo.precoUnitario})`)
+  audit('MUNICAO_TIPO_CREATED', req, `${tipo.nome} (R$ ${tipo.precoReal} / US$ ${tipo.precoDolar})`)
   broadcast({ resource: 'vendas', action: 'created', por: req.user!.username })
   res.status(201).json(tipo)
 })
@@ -208,6 +208,7 @@ router.post('/', requireAuth, requireEdit('vendas'), validateBody(vendaSchema), 
   const body = req.body as {
     data: string; membroId: number; familia: string
     pagamento: 'dinheiro' | 'troca'
+    moeda: 'Real' | 'Dólar'
     itens: { municaoId: number; quantidade: number }[]
     observacoes?: string
   }
@@ -241,26 +242,21 @@ router.post('/', requireAuth, requireEdit('vendas'), validateBody(vendaSchema), 
     res.status(400).json({ error: `Estoque insuficiente: ${detalhe}` }); return
   }
 
-  // A moeda da venda é a do primeiro item; misturar moedas tornaria o total sem sentido
-  const primeiroTipo = data.municaoTipos.find(t => t.id === body.itens[0].municaoId)!
-  const moeda = primeiroTipo.moeda
-  const moedasMisturadas = body.itens.some(i => {
-    const t = data.municaoTipos.find(t => t.id === i.municaoId)!
-    return t.moeda !== moeda
-  })
-  if (moedasMisturadas) {
-    res.status(400).json({ error: 'O carrinho mistura moedas diferentes. Separe em vendas distintas.' }); return
-  }
+  // Uma única moeda por venda: o toggle da tela escolhe qual preço cadastrado usar.
+  // O estoque é único (não depende da moeda).
+  const moeda = body.moeda
+  const precoDe = (t: MunicaoTipo) => (moeda === 'Dólar' ? t.precoDolar : t.precoReal)
 
   // Snapshot de nome e preço: o histórico não pode mudar quando o preço for reajustado
   const itens: VendaItem[] = body.itens.map(i => {
     const t = data.municaoTipos.find(t => t.id === i.municaoId)!
+    const preco = precoDe(t)
     return {
       municaoId: t.id,
       nomeMunicao: t.nome,
       quantidade: i.quantidade,
-      precoUnitario: t.precoUnitario,
-      subtotal: t.precoUnitario * i.quantidade,
+      precoUnitario: preco,
+      subtotal: preco * i.quantidade,
     }
   })
 

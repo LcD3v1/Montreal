@@ -112,20 +112,21 @@ export type PagamentoVenda = 'dinheiro' | 'troca'
 export interface MunicaoTipo {
   id: number
   nome: string
-  precoUnitario: number
-  moeda: Moeda
+  /** Dois preços cadastrados, um único estoque. A moeda da venda escolhe qual usar. */
+  precoReal: number
+  precoDolar: number
   ativo: boolean
 }
 
-/** Linha do estoque calculado — o backend devolve nome e preço já resolvidos. */
+/** Linha do estoque calculado — o backend devolve nome e os dois preços. */
 export interface MunicaoEstoque {
   municaoId: number
   nome: string
   entradas: number
   saidas: number
   quantidade: number
-  precoUnitario: number
-  moeda: Moeda
+  precoReal: number
+  precoDolar: number
   ativo: boolean
 }
 

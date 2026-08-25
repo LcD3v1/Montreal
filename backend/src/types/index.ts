@@ -92,8 +92,9 @@ export type TipoMovimentoMunicao = 'entrada' | 'saida'
 export interface MunicaoTipo {
   id: number
   nome: string
-  precoUnitario: number
-  moeda: Moeda
+  /** Dois preços cadastrados, um único estoque. A moeda da venda escolhe qual usar. */
+  precoReal: number
+  precoDolar: number
   /** Aposenta o tipo sem apagar o histórico que o referencia. */
   ativo: boolean
 }

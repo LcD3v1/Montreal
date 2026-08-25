@@ -91,7 +91,7 @@ export default function EstoqueMunicaoPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-bdr">
-                {['Arma', 'Preço', 'Entradas', 'Saídas', 'Em estoque'].map(h => (
+                {['Arma', 'Preços (R$ / US$)', 'Entradas', 'Saídas', 'Em estoque'].map(h => (
                   <th key={h} className="text-left font-mono text-xs text-txt3 tracking-wider px-4 py-2">{h}</th>
                 ))}
               </tr>
@@ -104,7 +104,7 @@ export default function EstoqueMunicaoPage() {
                   <td className="px-4 py-3 font-mono text-xs font-bold" style={{ color: l.ativo ? PALETTE.TEXT : PALETTE.DIM }}>
                     {l.nome}{!l.ativo && ' (desativado)'}
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-txt2">{fmtMoeda(l.precoUnitario, l.moeda)}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-txt2">{fmtMoeda(l.precoReal, 'Real')} <span className="text-txt3">/</span> {fmtMoeda(l.precoDolar, 'Dólar')}</td>
                   <td className="px-4 py-3 font-mono text-xs" style={{ color: PALETTE.POSITIVE }}>{l.entradas}</td>
                   <td className="px-4 py-3 font-mono text-xs" style={{ color: PALETTE.DANGER }}>{l.saidas}</td>
                   <td className="px-4 py-3 font-orbitron text-sm" style={{ color: l.quantidade > 0 ? PALETTE.POSITIVE : PALETTE.MUTED }}>
